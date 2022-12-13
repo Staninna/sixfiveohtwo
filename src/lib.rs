@@ -1,14 +1,11 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+// Set crate rules
+// #![allow(
+//     dead_code,
+//     unused_imports,
+//     unused_variables,
+//     unused_mut,
+//     unused_assignments
+// )]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod processor;
+mod registers;
