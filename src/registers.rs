@@ -21,7 +21,7 @@ struct StatusFlags {
 
 // Create a bitflag struct for the Status
 bitflags! {
-    struct Status: u8 {
+    pub struct Status: u8 {
         const NEGATIVE =      0b1000_0000;
         const OVERFLOW =      0b0100_0000;
         const UNUSED =        0b0010_0000;
@@ -91,24 +91,24 @@ impl Status {
 // Struct for the registers
 #[derive(Debug)]
 pub struct Registers {
-    program_counter: u16,
-    stack_pointer: u8,
-    accumulator: u8,
-    index_x: u8,
-    index_y: u8,
-    processor_status: Status,
+    pub pc: u16,
+    pub sp: u8,
+    pub acc: u8,
+    pub x: u8,
+    pub y: u8,
+    pub st: Status,
 }
 
 // Implement the Registers struct
 impl Registers {
     pub fn new() -> Self {
         Self {
-            program_counter: 0,
-            stack_pointer: 0,
-            accumulator: 0,
-            index_x: 0,
-            index_y: 0,
-            processor_status: Status::default(),
+            pc: 0x0000,
+            sp: 0x00,
+            acc: 0x00,
+            x: 0x00,
+            y: 0x00,
+            st: Status::default(),
         }
     }
 }
