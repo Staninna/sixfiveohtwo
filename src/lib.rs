@@ -7,5 +7,6 @@
 //     unused_assignments
 // )]
 
+pub mod memory;
 pub mod processor;
 mod registers;
