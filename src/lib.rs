@@ -8,5 +8,6 @@
 // )]
 
 pub mod memory;
+mod opcodes;
 pub mod processor;
 mod registers;
