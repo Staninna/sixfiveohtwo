@@ -7,6 +7,17 @@ use bitflags::bitflags;
 // Status flags //
 //////////////////
 
+pub enum Flag {
+    Negative,
+    Overflow,
+    Unused,
+    BreakCommand,
+    DecimalMode,
+    Interrupt,
+    Zero,
+    Carry,
+}
+
 // Obivous way to set flasgs in Status
 struct StatusFlags {
     negative: bool,
@@ -91,12 +102,12 @@ impl Status {
 // Struct for the registers
 #[derive(Debug)]
 pub struct Registers {
-    pub pc: u16,    // Program counter
-    pub sp: u8,     // Stack pointer
-    pub acc: u8,    // Accumulator
-    pub x: u8,      // X register
-    pub y: u8,      // Y register
-    pub st: Status, // Status register
+    pub pc: u16,        // Program counter
+    pub sp: u8,         // Stack pointer
+    pub acc: u8,        // Accumulator
+    pub x: u8,          // X register
+    pub y: u8,          // Y register
+    pub status: Status, // Status register
 }
 
 // Implement the Registers struct
@@ -108,7 +119,7 @@ impl Registers {
             acc: 0x00,
             x: 0x00,
             y: 0x00,
-            st: Status::default(),
+            status: Status::default(),
         }
     }
 }
