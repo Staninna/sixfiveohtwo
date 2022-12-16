@@ -27,6 +27,17 @@ impl Memory {
     pub fn write(&mut self, address: u16, data: u8) {
         self.memory[address as usize] = data;
     }
+
+    pub fn load(&mut self, program: Vec<u8>, start_address: u16) {
+        if start_address as usize + program.len() > self.memory.len() {
+            panic!("Program does not fit in memory");
+        }
+
+        // Load the program into memory
+        for (i, byte) in program.iter().enumerate() {
+            self.memory[start_address as usize + i] = *byte;
+        }
+    }
 }
 
 // Implement the Debug trait for the Memory struct
