@@ -33,7 +33,7 @@ impl Processor {
 
         // Load the program into memory
         if let Some(program) = program {
-            memory.load(program, 0x8000);
+            memory.load(program, 0x0000); // DEBUG
         }
 
         // Return the processor
@@ -56,24 +56,22 @@ impl Processor {
 
     fn fetch8(&mut self) -> u8 {
         // Get the byte at the program counter
-        let opcode = self.memory.read(self.registers.pc);
+        let byte = self.memory.read(self.registers.pc);
 
         // Increment the program counter
         self.registers.pc += 1;
 
         // Return the byte
-        opcode
+        byte
     }
 
     fn fetch16(&mut self) -> u16 {
-        // Get the two bytes at the program counter
-        let low = self.memory.read(self.registers.pc) as u16;
-        self.registers.pc += 1;
-        let high = self.memory.read(self.registers.pc) as u16;
-        self.registers.pc += 1;
+        // Get the two bytes at the program counter least significant bit name low and high
+        let high = self.fetch8();
+        let low = self.fetch8();
 
         // Return the bytes combined
-        (high << 8) | low
+        u16::from_le_bytes([low, high])
     }
 
     fn write_flag(&mut self, flag: Flag, status: bool) {
@@ -137,7 +135,18 @@ impl Processor {
         let byte = self.memory.read(address);
         self.registers.acc = byte;
 
-        // TODO: Set the zero and negative flags as appropriate
+        // Set flags
+        if byte == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        if byte & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
     }
 
     // Load X
@@ -147,7 +156,18 @@ impl Processor {
         let byte = self.memory.read(address);
         self.registers.x = byte;
 
-        // TODO: Set the zero and negative flags as appropriate
+        // Set flags
+        if byte == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        if byte & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
     }
 
     // Load Y
@@ -156,7 +176,18 @@ impl Processor {
         let byte = self.memory.read(address);
         self.registers.y = byte;
 
-        // TODO: Set the zero and negative flags as appropriate
+        // Set flags
+        if byte == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        if byte & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
     }
 
     // Store Accumulator
