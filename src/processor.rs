@@ -100,6 +100,33 @@ impl Processor {
         }
     }
 
+    fn set_flags(&mut self, flags: Vec<Flag>, byte: u8) {
+        for flag in flags {
+            match flag {
+                // Check and set nagative flag
+                Flag::Negative => {
+                    if byte & 0x80 == 0x80 {
+                        self.write_flag(NEGATIVE, true)
+                    } else {
+                        self.write_flag(NEGATIVE, false)
+                    }
+                }
+
+                // Check and set zero flag
+                Flag::Zero => {
+                    if byte == 0x00 {
+                        self.write_flag(ZERO, true)
+                    } else {
+                        self.write_flag(ZERO, false)
+                    }
+                }
+                _ => {
+                    unimplemented!("Flag not implemented")
+                }
+            }
+        }
+    }
+
     fn execute(&mut self, opcode: u8) {
         // Execute the instruction
         match opcode {
@@ -136,17 +163,7 @@ impl Processor {
         self.registers.acc = byte;
 
         // Set flags
-        if byte == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        if byte & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
     }
 
     // Load X
@@ -157,17 +174,7 @@ impl Processor {
         self.registers.x = byte;
 
         // Set flags
-        if byte == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        if byte & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
     }
 
     // Load Y
@@ -177,38 +184,37 @@ impl Processor {
         self.registers.y = byte;
 
         // Set flags
-        if byte == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        if byte & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
     }
 
     // Store Accumulator
     fn sta(&mut self) {
         let address = self.fetch16();
         let acc = self.registers.acc;
-        self.memory.write(address, acc)
+        self.memory.write(address, acc);
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], acc);
     }
 
     // Store X
     fn stx(&mut self) {
         let address = self.fetch16();
         let x = self.registers.x;
-        self.memory.write(address, x)
+        self.memory.write(address, x);
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], x);
     }
 
     // Store Y
     fn sty(&mut self) {
         let address = self.fetch16();
         let y = self.registers.y;
-        self.memory.write(address, y)
+        self.memory.write(address, y);
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], y);
     }
 
     // Transfer
@@ -216,21 +222,33 @@ impl Processor {
     // Transfer Accumulator to X
     fn tax(&mut self) {
         self.registers.x = self.registers.acc;
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.x);
     }
 
     // Transfer Accumulator to Y
     fn tay(&mut self) {
         self.registers.y = self.registers.acc;
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.y);
     }
 
     // Transfer X to Accumulator
     fn txa(&mut self) {
         self.registers.acc = self.registers.x;
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.acc);
     }
 
     // Transfer Y to Accumulator
     fn tya(&mut self) {
         self.registers.acc = self.registers.y;
+
+        // Set flags
+        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.acc);
     }
 }
 
