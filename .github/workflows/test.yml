@@ -1,22 +1,22 @@
-name: Build
+name: Test
 
 on:
     push:
         paths:
             - "**/*.rs"
             - "**/*.toml"
-            - ".github/workflows/build.yml"
+            - ".github/workflows/test.yml"
         branches:
             - master
     pull_request:
         paths:
             - "**/*.rs"
             - "**/*.toml"
-            - ".github/workflows/build.yml"
+            - ".github/workflows/test.yml"
 
 jobs:
     build:
-        name: Build
+        name: Test
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -27,8 +27,8 @@ jobs:
                   toolchain: stable
             - name: Add targets
               run: rustup target add x86_64-pc-windows-gnu x86_64-apple-darwin
-            - name: Build
+            - name: Test
               uses: actions-rs/cargo@v1
               with:
-                  command: build
+                  command: test
                   args: --release --target x86_64-pc-windows-gnu --target x86_64-apple-darwin --target x86_64-unknown-linux-gnu --verbose
