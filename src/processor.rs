@@ -1,7 +1,17 @@
 // Imports
 use crate::memory::Memory;
 use crate::opcodes::*;
-use crate::registers::Registers;
+use crate::registers::{Flag, Registers, Status};
+
+// Constants
+const NEGATIVE: Flag = Flag::Negative;
+const OVERFLOW: Flag = Flag::Overflow;
+const UNUSED: Flag = Flag::Unused;
+const BREAK_COMMAND: Flag = Flag::BreakCommand;
+const DECIMAL_MODE: Flag = Flag::DecimalMode;
+const INTERRUPT: Flag = Flag::Interrupt;
+const ZERO: Flag = Flag::Zero;
+const CARRY: Flag = Flag::Carry;
 
 // Structs
 
@@ -30,7 +40,21 @@ impl Processor {
         Self { registers, memory }
     }
 
-    fn fetch(&mut self) -> u8 {
+    pub fn run(&mut self) {
+        // Fetch and execute instructions
+        loop {
+            let instruction = self.fetch8();
+            self.execute(instruction);
+        }
+    }
+
+    pub fn step(&mut self) {
+        // Fetch and execute one instruction
+        let instruction = self.fetch8();
+        self.execute(instruction);
+    }
+
+    fn fetch8(&mut self) -> u8 {
         // Get the byte at the program counter
         let opcode = self.memory.read(self.registers.pc);
 
@@ -41,16 +65,53 @@ impl Processor {
         opcode
     }
 
+    fn fetch16(&mut self) -> u16 {
+        // Get the two bytes at the program counter
+        let low = self.memory.read(self.registers.pc) as u16;
+        self.registers.pc += 1;
+        let high = self.memory.read(self.registers.pc) as u16;
+        self.registers.pc += 1;
+
+        // Return the bytes combined
+        (high << 8) | low
+    }
+
+    fn write_flag(&mut self, flag: Flag, status: bool) {
+        match flag {
+            Flag::Negative => self.registers.status.set(Status::NEGATIVE, status),
+            Flag::Overflow => self.registers.status.set(Status::OVERFLOW, status),
+            Flag::Unused => self.registers.status.set(Status::UNUSED, status),
+            Flag::BreakCommand => self.registers.status.set(Status::BREAK_COMMAND, status),
+            Flag::DecimalMode => self.registers.status.set(Status::DECIMAL_MODE, status),
+            Flag::Interrupt => self.registers.status.set(Status::INTERRUPT, status),
+            Flag::Zero => self.registers.status.set(Status::ZERO, status),
+            Flag::Carry => self.registers.status.set(Status::CARRY, status),
+        }
+    }
+
+    fn read_flag(&self, flag: Flag) -> bool {
+        match flag {
+            Flag::Negative => self.registers.status.contains(Status::NEGATIVE),
+            Flag::Overflow => self.registers.status.contains(Status::OVERFLOW),
+            Flag::Unused => self.registers.status.contains(Status::UNUSED),
+            Flag::BreakCommand => self.registers.status.contains(Status::BREAK_COMMAND),
+            Flag::DecimalMode => self.registers.status.contains(Status::DECIMAL_MODE),
+            Flag::Interrupt => self.registers.status.contains(Status::INTERRUPT),
+            Flag::Zero => self.registers.status.contains(Status::ZERO),
+            Flag::Carry => self.registers.status.contains(Status::CARRY),
+        }
+    }
+
     fn execute(&mut self, opcode: u8) {
         // Execute the instruction
         match opcode {
-            // Loadstore
-            // LDA => self.lda(), TODO: Add this instruction
-            // LDX => self.ldx(), TODO: Add this instruction
-            // LDY => self.ldy(), TODO: Add this instruction
-            // STA => self.sta(), TODO: Add this instruction
-            // STX => self.stx(), TODO: Add this instruction
-            // STY => self.sty(), TODO: Add this instruction
+            // Load/Store
+            LDA => self.lda(), // Load Accumulator
+            LDX => self.ldx(), // Load X
+            LDY => self.ldy(), // Load Y
+            STA => self.sta(), // Store Accumulator
+            STX => self.stx(), // Store X
+            STY => self.sty(), // Store Y
 
             // Transfer
             TAX => self.tax(), // Transfer Accumulator to X
@@ -65,41 +126,79 @@ impl Processor {
         }
     }
 
-    pub fn run(&mut self) {
-        // Fetch and execute instructions
-        loop {
-            let instruction = self.fetch();
-            self.execute(instruction);
-        }
+    // Instructions
+
+    // Load/Store
+
+    // Load Accumulator
+    fn lda(&mut self) {
+        // Get the address
+        let address = self.fetch16();
+        let byte = self.memory.read(address);
+        self.registers.acc = byte;
+
+        // TODO: Set the zero and negative flags as appropriate
     }
 
-    pub fn step(&mut self) {
-        // Fetch and execute one instruction
-        let instruction = self.fetch();
-        self.execute(instruction);
+    // Load X
+    fn ldx(&mut self) {
+        // Get the address
+        let address = self.fetch16();
+        let byte = self.memory.read(address);
+        self.registers.x = byte;
+
+        // TODO: Set the zero and negative flags as appropriate
     }
 
-    // Instructions ----------------------------------------------------------------
+    // Load Y
+    fn ldy(&mut self) {
+        let address = self.fetch16();
+        let byte = self.memory.read(address);
+        self.registers.y = byte;
+
+        // TODO: Set the zero and negative flags as appropriate
+    }
+
+    // Store Accumulator
+    fn sta(&mut self) {
+        let address = self.fetch16();
+        let acc = self.registers.acc;
+        self.memory.write(address, acc)
+    }
+
+    // Store X
+    fn stx(&mut self) {
+        let address = self.fetch16();
+        let x = self.registers.x;
+        self.memory.write(address, x)
+    }
+
+    // Store Y
+    fn sty(&mut self) {
+        let address = self.fetch16();
+        let y = self.registers.y;
+        self.memory.write(address, y)
+    }
 
     // Transfer
 
     // Transfer Accumulator to X
-    pub fn tax(&mut self) {
+    fn tax(&mut self) {
         self.registers.x = self.registers.acc;
     }
 
     // Transfer Accumulator to Y
-    pub fn tay(&mut self) {
+    fn tay(&mut self) {
         self.registers.y = self.registers.acc;
     }
 
     // Transfer X to Accumulator
-    pub fn txa(&mut self) {
+    fn txa(&mut self) {
         self.registers.acc = self.registers.x;
     }
 
     // Transfer Y to Accumulator
-    pub fn tya(&mut self) {
+    fn tya(&mut self) {
         self.registers.acc = self.registers.y;
     }
 }
