@@ -163,7 +163,7 @@ impl Processor {
         self.registers.acc = byte;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
+        self.set_flags(vec![NEGATIVE, ZERO], byte)
     }
 
     // Load X
@@ -174,7 +174,7 @@ impl Processor {
         self.registers.x = byte;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
+        self.set_flags(vec![NEGATIVE, ZERO], byte)
     }
 
     // Load Y
@@ -184,37 +184,28 @@ impl Processor {
         self.registers.y = byte;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], byte);
+        self.set_flags(vec![NEGATIVE, ZERO], byte)
     }
 
     // Store Accumulator
     fn sta(&mut self) {
         let address = self.fetch16();
         let acc = self.registers.acc;
-        self.memory.write(address, acc);
-
-        // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], acc);
+        self.memory.write(address, acc)
     }
 
     // Store X
     fn stx(&mut self) {
         let address = self.fetch16();
         let x = self.registers.x;
-        self.memory.write(address, x);
-
-        // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], x);
+        self.memory.write(address, x)
     }
 
     // Store Y
     fn sty(&mut self) {
         let address = self.fetch16();
         let y = self.registers.y;
-        self.memory.write(address, y);
-
-        // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], y);
+        self.memory.write(address, y)
     }
 
     // Transfer
@@ -224,7 +215,7 @@ impl Processor {
         self.registers.x = self.registers.acc;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.x);
+        self.set_flags(vec![NEGATIVE, ZERO], self.registers.x)
     }
 
     // Transfer Accumulator to Y
@@ -232,7 +223,7 @@ impl Processor {
         self.registers.y = self.registers.acc;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.y);
+        self.set_flags(vec![NEGATIVE, ZERO], self.registers.y)
     }
 
     // Transfer X to Accumulator
@@ -240,7 +231,7 @@ impl Processor {
         self.registers.acc = self.registers.x;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.acc);
+        self.set_flags(vec![NEGATIVE, ZERO], self.registers.acc)
     }
 
     // Transfer Y to Accumulator
@@ -248,7 +239,7 @@ impl Processor {
         self.registers.acc = self.registers.y;
 
         // Set flags
-        self.set_flags(vec![Flag::Negative, Flag::Zero], self.registers.acc);
+        self.set_flags(vec![NEGATIVE, ZERO], self.registers.acc)
     }
 }
 
