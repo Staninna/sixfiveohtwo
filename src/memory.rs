@@ -68,3 +68,71 @@ impl fmt::Debug for Memory {
         write!(f, "{}", output)
     }
 }
+
+// Unit tests
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    // Test the Memory struct write and read functions
+    fn test_memory_write_read() {
+        let mut memory = Memory::new(0xFFFF);
+
+        memory.write(0x0000, 0x01);
+        memory.write(0x0001, 0x02);
+        memory.write(0x0002, 0x03);
+        memory.write(0x0003, 0x04);
+        memory.write(0x0004, 0x05);
+        memory.write(0x0005, 0x06);
+
+        assert_eq!(memory.read(0x0000), 0x01);
+        assert_eq!(memory.read(0x0001), 0x02);
+        assert_eq!(memory.read(0x0002), 0x03);
+        assert_eq!(memory.read(0x0003), 0x04);
+        assert_eq!(memory.read(0x0004), 0x05);
+        assert_eq!(memory.read(0x0005), 0x06);
+    }
+
+    #[test]
+    // Test the Memory struct load function
+    fn test_memory_load() {
+        let mut memory = Memory::new(0xFFFF);
+
+        memory.load(vec![0x01, 0x02, 0x03], 0x0000);
+
+        assert_eq!(memory.read(0x0000), 0x01);
+        assert_eq!(memory.read(0x0001), 0x02);
+        assert_eq!(memory.read(0x0002), 0x03);
+    }
+
+    #[test]
+    #[should_panic]
+    // Test the Memory struct load function with an out of bounds addresses
+    fn test_memory_load_out_of_bounds() {
+        let mut memory = Memory::new(0xFFFF);
+
+        memory.load(vec![0x01, 0x02, 0x03], 0xFFFD);
+    }
+
+    #[test]
+    // Test the Memory struct Debug trait
+    fn test_memory_debug() {
+        let mut memory = Memory::new(0x0020);
+
+        memory.load(
+            vec![
+                0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B,
+            ],
+            0x0000,
+        );
+
+        let output = format!("{:?}", memory);
+
+        assert_eq!(
+            output,
+            "\n0x0000: 01 02 03 04 05 06 07 08 09 0A 0B 00 00 00 00 00 \n0x0010: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 \n"
+        );
+    }
+}

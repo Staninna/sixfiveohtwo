@@ -234,232 +234,237 @@ impl Processor {
     }
 }
 
-// Unit tests for the processor
+// Unit tests
 
-// Flags tests
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-// Test the Negative flag true
-fn test_negative_flag_true() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
-            0xFF, // ---------- Hardcoded value at $0003
-        ]),
-    );
+    // Flags tests
 
-    processor.step();
-    assert_eq!(processor.registers.status.contains(Status::NEGATIVE), true);
-}
+    #[test]
+    // Test the Negative flag true
+    fn test_negative_flag_true() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
+                0xFF, // ---------- Hardcoded value at $0003
+            ]),
+        );
 
-#[test]
-// Test the Negative flag false
-fn test_negative_flag_false() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
-            0x0F, // ---------- Hardcoded value at $0003
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.status.contains(Status::NEGATIVE), true);
+    }
 
-    processor.step();
-    assert_eq!(processor.registers.status.contains(Status::NEGATIVE), false);
-}
+    #[test]
+    // Test the Negative flag false
+    fn test_negative_flag_false() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
+                0x0F, // ---------- Hardcoded value at $0003
+            ]),
+        );
 
-#[test]
-// Test the Zero flag true
-fn test_zero_flag_true() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x00)
-            0x00, // ---------- Hardcoded value at $0003
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.status.contains(Status::NEGATIVE), false);
+    }
 
-    processor.step();
-    assert_eq!(processor.registers.status.contains(Status::ZERO), true);
-}
+    #[test]
+    // Test the Zero flag true
+    fn test_zero_flag_true() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x00)
+                0x00, // ---------- Hardcoded value at $0003
+            ]),
+        );
 
-#[test]
-// Test the Zero flag false
-fn test_zero_flag_false() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
-            0x0F, // ---------- Hardcoded value at $0003
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.status.contains(Status::ZERO), true);
+    }
 
-    processor.step();
-    assert_eq!(processor.registers.status.contains(Status::ZERO), false);
-}
+    #[test]
+    // Test the Zero flag false
+    fn test_zero_flag_false() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
+                0x0F, // ---------- Hardcoded value at $0003
+            ]),
+        );
 
-// Instruction tests
+        processor.step();
+        assert_eq!(processor.registers.status.contains(Status::ZERO), false);
+    }
 
-#[test]
-// Test the Load Accumulator (LDA) opcode
-fn test_lda() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
-            0xFF, // ---------- Hardcoded value at $0004
-        ]),
-    );
+    // Instruction tests
 
-    processor.step();
-    assert_eq!(processor.registers.acc, 0xFF);
-}
+    #[test]
+    // Test the Load Accumulator (LDA) opcode
+    fn test_lda() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
+                0xFF, // ---------- Hardcoded value at $0004
+            ]),
+        );
 
-#[test]
-// Test the Load X (LDX) opcode
-fn test_ldx() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDX, 0x00, 0x03, // Load value from memory address $0003 into X (0xFF)
-            0xFF, // ---------- Hardcoded value at $0004
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.acc, 0xFF);
+    }
 
-    processor.step();
-    assert_eq!(processor.registers.x, 0xFF);
-}
+    #[test]
+    // Test the Load X (LDX) opcode
+    fn test_ldx() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDX, 0x00, 0x03, // Load value from memory address $0003 into X (0xFF)
+                0xFF, // ---------- Hardcoded value at $0004
+            ]),
+        );
 
-#[test]
-// Test the Load Y (LDY) opcode
-fn test_ldy() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDY, 0x00, 0x03, // Load value from memory address $0003 into Y (0xFF)
-            0xFF, // ---------- Hardcoded value at $0004
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.x, 0xFF);
+    }
 
-    processor.step();
-    assert_eq!(processor.registers.y, 0xFF);
-}
+    #[test]
+    // Test the Load Y (LDY) opcode
+    fn test_ldy() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDY, 0x00, 0x03, // Load value from memory address $0003 into Y (0xFF)
+                0xFF, // ---------- Hardcoded value at $0004
+            ]),
+        );
 
-#[test]
-// Test the Store Accumulator (STA) opcode
-fn test_sta() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x06, // Load value from memory address $0006 into A (0xFF)
-            STA, 0x00, 0x07, // Store value in A at memory address $0007
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        assert_eq!(processor.registers.y, 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.memory.read(0x0007), 0xFF);
-}
+    #[test]
+    // Test the Store Accumulator (STA) opcode
+    fn test_sta() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x06, // Load value from memory address $0006 into A (0xFF)
+                STA, 0x00, 0x07, // Store value in A at memory address $0007
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Store X (STX) opcode
-fn test_stx() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDX, 0x00, 0x06, // Load value from memory address $0006 into X (0xFF)
-            STX, 0x00, 0x07, // Store value in X at memory address $0007
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.memory.read(0x0007), 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.memory.read(0x0007), 0xFF);
-}
+    #[test]
+    // Test the Store X (STX) opcode
+    fn test_stx() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDX, 0x00, 0x06, // Load value from memory address $0006 into X (0xFF)
+                STX, 0x00, 0x07, // Store value in X at memory address $0007
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Store Y (STY) opcode
-fn test_sty() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDY, 0x00, 0x06, // Load value from memory address $0006 into Y (0xFF)
-            STY, 0x00, 0x07, // Store value in Y at memory address $0007
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.memory.read(0x0007), 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.memory.read(0x0007), 0xFF);
-}
+    #[test]
+    // Test the Store Y (STY) opcode
+    fn test_sty() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDY, 0x00, 0x06, // Load value from memory address $0006 into Y (0xFF)
+                STY, 0x00, 0x07, // Store value in Y at memory address $0007
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Transfer Accumulator to X (TAX) opcode
-fn test_tax() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
-            TAX,  // ---------- Transfer value in A to X
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.memory.read(0x0007), 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.registers.x, 0xFF);
-}
+    #[test]
+    // Test the Transfer Accumulator to X (TAX) opcode
+    fn test_tax() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
+                TAX,  // ---------- Transfer value in A to X
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Transfer Accumulator to Y (TAY) opcode
-fn test_tay() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
-            TAY,  // ---------- Transfer value in A to Y
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.registers.x, 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.registers.y, 0xFF);
-}
+    #[test]
+    // Test the Transfer Accumulator to Y (TAY) opcode
+    fn test_tay() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
+                TAY,  // ---------- Transfer value in A to Y
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Transfer X to Accumulator (TXA) opcode
-fn test_txa() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDX, 0x00, 0x04, // Load value from memory address $0004 into X (0xFF)
-            TXA,  // ---------- Transfer value in X to A
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.registers.y, 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.registers.acc, 0xFF);
-}
+    #[test]
+    // Test the Transfer X to Accumulator (TXA) opcode
+    fn test_txa() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDX, 0x00, 0x04, // Load value from memory address $0004 into X (0xFF)
+                TXA,  // ---------- Transfer value in X to A
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
 
-#[test]
-// Test the Transfer Y to Accumulator (TYA) opcode
-fn test_tya() {
-    let mut processor = Processor::new(
-        0x00FF,
-        Some(vec![
-            LDY, 0x00, 0x04, // Load value from memory address $0004 into Y (0xFF)
-            TYA,  // ---------- Transfer value in Y to A
-            0xFF, // ---------- Hardcoded value at $0006
-        ]),
-    );
+        processor.step();
+        processor.step();
+        assert_eq!(processor.registers.acc, 0xFF);
+    }
 
-    processor.step();
-    processor.step();
-    assert_eq!(processor.registers.acc, 0xFF);
+    #[test]
+    // Test the Transfer Y to Accumulator (TYA) opcode
+    fn test_tya() {
+        let mut processor = Processor::new(
+            0x00FF,
+            Some(vec![
+                LDY, 0x00, 0x04, // Load value from memory address $0004 into Y (0xFF)
+                TYA,  // ---------- Transfer value in Y to A
+                0xFF, // ---------- Hardcoded value at $0006
+            ]),
+        );
+
+        processor.step();
+        processor.step();
+        assert_eq!(processor.registers.acc, 0xFF);
+    }
 }
