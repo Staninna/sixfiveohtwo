@@ -91,12 +91,12 @@ impl Status {
 // Struct for the registers
 #[derive(Debug)]
 pub struct Registers {
-    pub pc: u16,
-    pub sp: u8,
-    pub acc: u8,
-    pub x: u8,
-    pub y: u8,
-    pub st: Status,
+    pub pc: u16,    // Program counter
+    pub sp: u8,     // Stack pointer
+    pub acc: u8,    // Accumulator
+    pub x: u8,      // X register
+    pub y: u8,      // Y register
+    pub st: Status, // Status register
 }
 
 // Implement the Registers struct
