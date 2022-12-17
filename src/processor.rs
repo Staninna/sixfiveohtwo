@@ -139,6 +139,11 @@ impl Processor {
             STA_INDX => self.sta(AddressingMode::IndirectX),
             STA_INDY => self.sta(AddressingMode::IndirectY),
 
+            // Store X
+            STX_ZP => self.stx(AddressingMode::ZeroPage),
+            STX_ZPY => self.stx(AddressingMode::ZeroPageY),
+            STX_ABS => self.stx(AddressingMode::Absolute),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -432,6 +437,35 @@ impl Processor {
 
         // Write value
         self.memory.write(address, self.registers.acc);
+    }
+
+    // Store X
+    fn stx(&mut self, mode: AddressingMode) {
+        let address = match mode {
+            // Zero page
+            AddressingMode::ZeroPage => {
+                let offset = self.fetch8();
+                0x0000 + offset as u16
+            }
+
+            // Zero page Y
+            AddressingMode::ZeroPageY => {
+                let y = self.registers.y;
+                let offset = self.fetch8();
+                0x0000 + offset as u16 + y as u16
+            }
+
+            // Absolute
+            AddressingMode::Absolute => self.fetch16(),
+
+            // Unknow addressing mode
+            _ => {
+                unreachable!("Unreachable addressing mode")
+            }
+        };
+
+        // Write value
+        self.memory.write(address, self.registers.x);
     }
 }
 

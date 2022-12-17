@@ -34,3 +34,8 @@ pub const STA_ABSX: u8 = 0x9D;
 pub const STA_ABSY: u8 = 0x99;
 pub const STA_INDX: u8 = 0x81;
 pub const STA_INDY: u8 = 0x91;
+
+// Store X
+pub const STX_ZP: u8 = 0x86;
+pub const STX_ZPY: u8 = 0x96;
+pub const STX_ABS: u8 = 0x8E;
