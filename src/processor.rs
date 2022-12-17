@@ -101,6 +101,10 @@ impl Processor {
         }
     }
 
+    pub fn get_registers(&self) -> &Registers {
+        &self.registers
+    }
+
     fn execute(&mut self, opcode: u8) {
         // Execute the instruction
         match opcode {
@@ -502,5 +506,3 @@ impl Processor {
         self.memory.write(address, self.registers.y);
     }
 }
-
-// Unit tests: TODO
