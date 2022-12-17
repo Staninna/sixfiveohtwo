@@ -25,3 +25,12 @@ pub const LDY_ZP: u8 = 0xA4;
 pub const LDY_ZPX: u8 = 0xB4;
 pub const LDY_ABS: u8 = 0xAC;
 pub const LDY_ABSX: u8 = 0xBC;
+
+// Store accumulator
+pub const STA_ZP: u8 = 0x85;
+pub const STA_ZPX: u8 = 0x95;
+pub const STA_ABS: u8 = 0x8D;
+pub const STA_ABSX: u8 = 0x9D;
+pub const STA_ABSY: u8 = 0x99;
+pub const STA_INDX: u8 = 0x81;
+pub const STA_INDY: u8 = 0x91;

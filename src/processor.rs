@@ -130,6 +130,15 @@ impl Processor {
             LDY_ABS => self.ldy(AddressingMode::Absolute),
             LDY_ABSX => self.ldy(AddressingMode::AbsoluteX),
 
+            // Store accumulator
+            STA_ZP => self.sta(AddressingMode::ZeroPage),
+            STA_ZPX => self.sta(AddressingMode::ZeroPageX),
+            STA_ABS => self.sta(AddressingMode::Absolute),
+            STA_ABSX => self.sta(AddressingMode::AbsoluteX),
+            STA_ABSY => self.sta(AddressingMode::AbsoluteY),
+            STA_INDX => self.sta(AddressingMode::IndirectX),
+            STA_INDY => self.sta(AddressingMode::IndirectY),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -352,6 +361,77 @@ impl Processor {
         } else {
             self.write_flag(NEGATIVE, false)
         }
+    }
+
+    // Store accumulator
+    fn sta(&mut self, mode: AddressingMode) {
+        let address = match mode {
+            // Zero page
+            AddressingMode::ZeroPage => {
+                let offset = self.fetch8();
+                0x0000 + offset as u16
+            }
+
+            // Zero page X
+            AddressingMode::ZeroPageX => {
+                let x = self.registers.x;
+                let offset = self.fetch8();
+                0x0000 + offset as u16 + x as u16
+            }
+
+            // Absolute
+            AddressingMode::Absolute => self.fetch16(),
+
+            // Absolute X
+            AddressingMode::AbsoluteX => {
+                let x = self.registers.x;
+                self.fetch16() + x as u16
+            }
+
+            // Absolute Y
+            AddressingMode::AbsoluteY => {
+                let y = self.registers.y;
+                self.fetch16() + y as u16
+            }
+
+            // Indirect X
+            AddressingMode::IndirectX => {
+                // Get the offset
+                let x = self.registers.x;
+                let offset = self.fetch8();
+
+                // Get the pointer address
+                let pointer_address = 0x0000 + offset as u16 + x as u16;
+                let low = self.memory.read(pointer_address);
+                let high = self.memory.read(pointer_address + 1);
+
+                // Get the value
+                u16::from_le_bytes([low, high])
+            }
+
+            // Indirect Y
+            AddressingMode::IndirectY => {
+                // Get the offset
+                let y = self.registers.y;
+                let offset = self.fetch8();
+
+                // Get the pointer address
+                let address = 0x0000 + offset as u16;
+                let low = self.memory.read(address);
+                let high = self.memory.read(address + 1);
+
+                // Get the value
+                u16::from_le_bytes([low, high]) + y as u16
+            }
+
+            // Unknow addressing mode
+            _ => {
+                unreachable!("Unreachable addressing mode")
+            }
+        };
+
+        // Write value
+        self.memory.write(address, self.registers.acc);
     }
 }
 
