@@ -46,7 +46,7 @@ impl fmt::Debug for Memory {
         let mut output = String::new();
 
         // Add new line
-        output.push_str(&format!("\n"));
+        output.push('\n');
 
         // Iterate through the memory
         for (i, byte) in self.memory.iter().enumerate() {
@@ -60,7 +60,7 @@ impl fmt::Debug for Memory {
 
             // Add a new line
             if i % 16 == 15 {
-                output.push_str(&format!("\n"));
+                output.push('\n');
             }
         }
 
