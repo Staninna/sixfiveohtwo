@@ -18,3 +18,10 @@ pub const LDX_ZP: u8 = 0xA6;
 pub const LDX_ZPY: u8 = 0xB6;
 pub const LDX_ABS: u8 = 0xAE;
 pub const LDX_ABSY: u8 = 0xBE;
+
+// Load Y
+pub const LDY_IM: u8 = 0xA0;
+pub const LDY_ZP: u8 = 0xA4;
+pub const LDY_ZPX: u8 = 0xB4;
+pub const LDY_ABS: u8 = 0xAC;
+pub const LDY_ABSX: u8 = 0xBC;
