@@ -13,6 +13,19 @@ const INTERRUPT: Flag = Flag::Interrupt;
 const ZERO: Flag = Flag::Zero;
 const CARRY: Flag = Flag::Carry;
 
+// Enums
+
+enum AddressingMode {
+    Immediate,
+    ZeroPage,
+    ZeroPageX,
+    Absolute,
+    AbsoluteX,
+    AbsoluteY,
+    IndirectX,
+    IndirectY,
+}
+
 // Structs
 
 ///////////////
@@ -87,64 +100,22 @@ impl Processor {
         }
     }
 
-    fn read_flag(&self, flag: Flag) -> bool {
-        match flag {
-            Flag::Negative => self.registers.status.contains(Status::NEGATIVE),
-            Flag::Overflow => self.registers.status.contains(Status::OVERFLOW),
-            Flag::Unused => self.registers.status.contains(Status::UNUSED),
-            Flag::BreakCommand => self.registers.status.contains(Status::BREAK_COMMAND),
-            Flag::DecimalMode => self.registers.status.contains(Status::DECIMAL_MODE),
-            Flag::Interrupt => self.registers.status.contains(Status::INTERRUPT),
-            Flag::Zero => self.registers.status.contains(Status::ZERO),
-            Flag::Carry => self.registers.status.contains(Status::CARRY),
-        }
-    }
-
-    fn set_flags(&mut self, flags: Vec<Flag>, byte: u8) {
-        for flag in flags {
-            match flag {
-                // Check and set nagative flag
-                Flag::Negative => {
-                    if byte & 0x80 == 0x80 {
-                        self.write_flag(NEGATIVE, true)
-                    } else {
-                        self.write_flag(NEGATIVE, false)
-                    }
-                }
-
-                // Check and set zero flag
-                Flag::Zero => {
-                    if byte == 0x00 {
-                        self.write_flag(ZERO, true)
-                    } else {
-                        self.write_flag(ZERO, false)
-                    }
-                }
-                _ => {
-                    unimplemented!("Flag not implemented")
-                }
-            }
-        }
-    }
-
     fn execute(&mut self, opcode: u8) {
         // Execute the instruction
         match opcode {
-            // Load/Store
-            LDA => self.lda(), // Load Accumulator
-            LDX => self.ldx(), // Load X
-            LDY => self.ldy(), // Load Y
-            STA => self.sta(), // Store Accumulator
-            STX => self.stx(), // Store X
-            STY => self.sty(), // Store Y
+            // Load/store instructions
 
-            // Transfer
-            TAX => self.tax(), // Transfer Accumulator to X
-            TAY => self.tay(), // Transfer Accumulator to Y
-            TXA => self.txa(), // Transfer X to Accumulator
-            TYA => self.tya(), // Transfer Y to Accumulator
+            // Load accumulator
+            LDA_IM => self.lda(AddressingMode::Immediate),
+            LDA_ZP => self.lda(AddressingMode::ZeroPage),
+            LDA_ZPX => self.lda(AddressingMode::ZeroPageX),
+            LDA_ABS => self.lda(AddressingMode::Absolute),
+            LDA_ABSX => self.lda(AddressingMode::AbsoluteX),
+            LDA_ABSY => self.lda(AddressingMode::AbsoluteY),
+            LDA_INDX => self.lda(AddressingMode::IndirectX),
+            LDA_INDY => self.lda(AddressingMode::IndirectY),
 
-            // Unknown opcode
+            // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
             }
@@ -153,327 +124,104 @@ impl Processor {
 
     // Instructions
 
-    // Load/Store
+    // Load/store instructions
 
-    // Load Accumulator
-    fn lda(&mut self) {
-        // Get the address
-        let address = self.fetch16();
-        let byte = self.memory.read(address);
-        self.registers.acc = byte;
+    // Load accumulator
+    fn lda(&mut self, mode: AddressingMode) {
+        let value = match mode {
+            // Immediate
+            AddressingMode::Immediate => self.fetch8(),
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], byte)
-    }
+            // Zero page
+            AddressingMode::ZeroPage => {
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16;
+                self.memory.read(address)
+            }
 
-    // Load X
-    fn ldx(&mut self) {
-        // Get the address
-        let address = self.fetch16();
-        let byte = self.memory.read(address);
-        self.registers.x = byte;
+            // Zero page X
+            AddressingMode::ZeroPageX => {
+                let x = self.registers.x;
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16 + x as u16;
+                self.memory.read(address)
+            }
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], byte)
-    }
+            // Absolute
+            AddressingMode::Absolute => {
+                let address = self.fetch16();
+                self.memory.read(address)
+            }
 
-    // Load Y
-    fn ldy(&mut self) {
-        let address = self.fetch16();
-        let byte = self.memory.read(address);
-        self.registers.y = byte;
+            // Absolute X
+            AddressingMode::AbsoluteX => {
+                let x = self.registers.x;
+                let address = self.fetch16() + x as u16;
+                self.memory.read(address)
+            }
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], byte)
-    }
+            // Absolute Y
+            AddressingMode::AbsoluteY => {
+                let y = self.registers.y;
+                let address = self.fetch16() + y as u16;
+                self.memory.read(address)
+            }
 
-    // Store Accumulator
-    fn sta(&mut self) {
-        let address = self.fetch16();
-        let acc = self.registers.acc;
-        self.memory.write(address, acc)
-    }
+            // Indirect X
+            AddressingMode::IndirectX => {
+                // Get the offset
+                let x = self.registers.x;
+                let offset = self.fetch8();
 
-    // Store X
-    fn stx(&mut self) {
-        let address = self.fetch16();
-        let x = self.registers.x;
-        self.memory.write(address, x)
-    }
+                // Get the pointer address
+                let pointer_address = 0x0000 + offset as u16 + x as u16;
+                let low = self.memory.read(pointer_address);
+                let high = self.memory.read(pointer_address + 1);
 
-    // Store Y
-    fn sty(&mut self) {
-        let address = self.fetch16();
-        let y = self.registers.y;
-        self.memory.write(address, y)
-    }
+                // Get the value
+                let address = u16::from_le_bytes([low, high]);
+                self.memory.read(address)
+            }
 
-    // Transfer
+            // Indirect Y
+            AddressingMode::IndirectY => {
+                // Get the offset
+                let y = self.registers.y;
+                let offset = self.fetch8();
 
-    // Transfer Accumulator to X
-    fn tax(&mut self) {
-        self.registers.x = self.registers.acc;
+                // Get the pointer address
+                let address = 0x0000 + offset as u16;
+                let low = self.memory.read(address);
+                let high = self.memory.read(address + 1);
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], self.registers.x)
-    }
+                // Get the value
+                let address = u16::from_le_bytes([low, high]) + y as u16;
+                self.memory.read(address)
+            }
 
-    // Transfer Accumulator to Y
-    fn tay(&mut self) {
-        self.registers.y = self.registers.acc;
+            // Unknow addressing mode
+            _ => {
+                panic!("Unreachable addressing mode")
+            }
+        };
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], self.registers.y)
-    }
+        // Set accumulator
+        self.registers.acc = value;
 
-    // Transfer X to Accumulator
-    fn txa(&mut self) {
-        self.registers.acc = self.registers.x;
+        // Set zero flag
+        if value == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
 
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], self.registers.acc)
-    }
-
-    // Transfer Y to Accumulator
-    fn tya(&mut self) {
-        self.registers.acc = self.registers.y;
-
-        // Set flags
-        self.set_flags(vec![NEGATIVE, ZERO], self.registers.acc)
-    }
-}
-
-// Unit tests
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // Flags tests
-
-    #[test]
-    // Test the Negative flag true
-    fn test_negative_flag_true() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
-                0xFF, // ---------- Hardcoded value at $0003
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.status.contains(Status::NEGATIVE), true);
-    }
-
-    #[test]
-    // Test the Negative flag false
-    fn test_negative_flag_false() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
-                0x0F, // ---------- Hardcoded value at $0003
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.status.contains(Status::NEGATIVE), false);
-    }
-
-    #[test]
-    // Test the Zero flag true
-    fn test_zero_flag_true() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x00)
-                0x00, // ---------- Hardcoded value at $0003
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.status.contains(Status::ZERO), true);
-    }
-
-    #[test]
-    // Test the Zero flag false
-    fn test_zero_flag_false() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0x0F)
-                0x0F, // ---------- Hardcoded value at $0003
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.status.contains(Status::ZERO), false);
-    }
-
-    // Instruction tests
-
-    #[test]
-    // Test the Load Accumulator (LDA) opcode
-    fn test_lda() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x03, // Load value from memory address $0003 into A (0xFF)
-                0xFF, // ---------- Hardcoded value at $0004
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.acc, 0xFF);
-    }
-
-    #[test]
-    // Test the Load X (LDX) opcode
-    fn test_ldx() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDX, 0x00, 0x03, // Load value from memory address $0003 into X (0xFF)
-                0xFF, // ---------- Hardcoded value at $0004
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.x, 0xFF);
-    }
-
-    #[test]
-    // Test the Load Y (LDY) opcode
-    fn test_ldy() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDY, 0x00, 0x03, // Load value from memory address $0003 into Y (0xFF)
-                0xFF, // ---------- Hardcoded value at $0004
-            ]),
-        );
-
-        processor.step();
-        assert_eq!(processor.registers.y, 0xFF);
-    }
-
-    #[test]
-    // Test the Store Accumulator (STA) opcode
-    fn test_sta() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x06, // Load value from memory address $0006 into A (0xFF)
-                STA, 0x00, 0x07, // Store value in A at memory address $0007
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.memory.read(0x0007), 0xFF);
-    }
-
-    #[test]
-    // Test the Store X (STX) opcode
-    fn test_stx() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDX, 0x00, 0x06, // Load value from memory address $0006 into X (0xFF)
-                STX, 0x00, 0x07, // Store value in X at memory address $0007
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.memory.read(0x0007), 0xFF);
-    }
-
-    #[test]
-    // Test the Store Y (STY) opcode
-    fn test_sty() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDY, 0x00, 0x06, // Load value from memory address $0006 into Y (0xFF)
-                STY, 0x00, 0x07, // Store value in Y at memory address $0007
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.memory.read(0x0007), 0xFF);
-    }
-
-    #[test]
-    // Test the Transfer Accumulator to X (TAX) opcode
-    fn test_tax() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
-                TAX,  // ---------- Transfer value in A to X
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.registers.x, 0xFF);
-    }
-
-    #[test]
-    // Test the Transfer Accumulator to Y (TAY) opcode
-    fn test_tay() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDA, 0x00, 0x04, // Load value from memory address $0004 into A (0xFF)
-                TAY,  // ---------- Transfer value in A to Y
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.registers.y, 0xFF);
-    }
-
-    #[test]
-    // Test the Transfer X to Accumulator (TXA) opcode
-    fn test_txa() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDX, 0x00, 0x04, // Load value from memory address $0004 into X (0xFF)
-                TXA,  // ---------- Transfer value in X to A
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.registers.acc, 0xFF);
-    }
-
-    #[test]
-    // Test the Transfer Y to Accumulator (TYA) opcode
-    fn test_tya() {
-        let mut processor = Processor::new(
-            0x00FF,
-            Some(vec![
-                LDY, 0x00, 0x04, // Load value from memory address $0004 into Y (0xFF)
-                TYA,  // ---------- Transfer value in Y to A
-                0xFF, // ---------- Hardcoded value at $0006
-            ]),
-        );
-
-        processor.step();
-        processor.step();
-        assert_eq!(processor.registers.acc, 0xFF);
+        // Set negative flag
+        if value & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
     }
 }
+
+// Unit tests: TODO
