@@ -144,6 +144,11 @@ impl Processor {
             STX_ZPY => self.stx(AddressingMode::ZeroPageY),
             STX_ABS => self.stx(AddressingMode::Absolute),
 
+            // Store Y
+            STY_ZP => self.sty(AddressingMode::ZeroPage),
+            STY_ZPX => self.sty(AddressingMode::ZeroPageX),
+            STY_ABS => self.sty(AddressingMode::Absolute),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -466,6 +471,35 @@ impl Processor {
 
         // Write value
         self.memory.write(address, self.registers.x);
+    }
+
+    // Store Y
+    fn sty(&mut self, mode: AddressingMode) {
+        let address = match mode {
+            // Zero page
+            AddressingMode::ZeroPage => {
+                let offset = self.fetch8();
+                0x0000 + offset as u16
+            }
+
+            // Zero page X
+            AddressingMode::ZeroPageX => {
+                let x = self.registers.x;
+                let offset = self.fetch8();
+                0x0000 + offset as u16 + x as u16
+            }
+
+            // Absolute
+            AddressingMode::Absolute => self.fetch16(),
+
+            // Unknow addressing mode
+            _ => {
+                unreachable!("Unreachable addressing mode")
+            }
+        };
+
+        // Write value
+        self.memory.write(address, self.registers.y);
     }
 }
 

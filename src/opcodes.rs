@@ -39,3 +39,8 @@ pub const STA_INDY: u8 = 0x91;
 pub const STX_ZP: u8 = 0x86;
 pub const STX_ZPY: u8 = 0x96;
 pub const STX_ABS: u8 = 0x8E;
+
+// Store Y
+pub const STY_ZP: u8 = 0x84;
+pub const STY_ZPX: u8 = 0x94;
+pub const STY_ABS: u8 = 0x8C;
