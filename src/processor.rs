@@ -19,6 +19,7 @@ enum AddressingMode {
     Immediate,
     ZeroPage,
     ZeroPageX,
+    ZeroPageY,
     Absolute,
     AbsoluteX,
     AbsoluteY,
@@ -115,6 +116,13 @@ impl Processor {
             LDA_INDX => self.lda(AddressingMode::IndirectX),
             LDA_INDY => self.lda(AddressingMode::IndirectY),
 
+            // Load X
+            LDX_IM => self.ldx(AddressingMode::Immediate),
+            LDX_ZP => self.ldx(AddressingMode::ZeroPage),
+            LDX_ZPY => self.ldx(AddressingMode::ZeroPageY),
+            LDX_ABS => self.ldx(AddressingMode::Absolute),
+            LDX_ABSY => self.ldx(AddressingMode::AbsoluteY),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -205,17 +213,75 @@ impl Processor {
             }
         };
 
-        // Set accumulator
+        // Write accumulator
         self.registers.acc = value;
 
-        // Set zero flag
+        // Write zero flag
         if value == 0x00 {
             self.write_flag(ZERO, true)
         } else {
             self.write_flag(ZERO, false)
         }
 
-        // Set negative flag
+        // Write negative flag
+        if value & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Load x
+    fn ldx(&mut self, mode: AddressingMode) {
+        let value = match mode {
+            // Immediate
+            AddressingMode::Immediate => self.fetch8(),
+
+            // Zero page
+            AddressingMode::ZeroPage => {
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16;
+                self.memory.read(address)
+            }
+
+            // Zero page y
+            AddressingMode::ZeroPageY => {
+                let y = self.registers.y;
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16 + y as u16;
+                self.memory.read(address)
+            }
+
+            // Absolute
+            AddressingMode::Absolute => {
+                let address = self.fetch16();
+                self.memory.read(address)
+            }
+
+            // Absolute Y
+            AddressingMode::AbsoluteY => {
+                let y = self.registers.y;
+                let address = self.fetch16() + y as u16;
+                self.memory.read(address)
+            }
+
+            // Unknow addressing mode
+            _ => {
+                panic!("Unreachable addressing mode")
+            }
+        };
+
+        // Write x
+        self.registers.x = value;
+
+        // Write zero flag
+        if value == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
         if value & 0x80 == 0x80 {
             self.write_flag(NEGATIVE, true)
         } else {

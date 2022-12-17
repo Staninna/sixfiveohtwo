@@ -11,3 +11,10 @@ pub const LDA_ABSX: u8 = 0xBD;
 pub const LDA_ABSY: u8 = 0xB9;
 pub const LDA_INDX: u8 = 0xA1;
 pub const LDA_INDY: u8 = 0xB1;
+
+// Load X
+pub const LDX_IM: u8 = 0xA2;
+pub const LDX_ZP: u8 = 0xA6;
+pub const LDX_ZPY: u8 = 0xB6;
+pub const LDX_ABS: u8 = 0xAE;
+pub const LDX_ABSY: u8 = 0xBE;
