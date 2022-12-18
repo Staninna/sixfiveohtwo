@@ -1,4 +1,5 @@
 // Imports
+use crate::device::Device;
 use crate::device_mapper::DeviceMapper;
 use crate::opcodes::*;
 use crate::registers::{Flag, Registers, Status};
@@ -33,7 +34,7 @@ enum AddressingMode {
 #[derive(Debug)]
 pub struct Processor {
     registers: Registers,
-    pub device_mapper: DeviceMapper,
+    device_mapper: DeviceMapper,
 }
 
 impl Processor {
@@ -74,6 +75,18 @@ impl Processor {
         }
     }
 
+    pub fn get_registers(&self) -> &Registers {
+        &self.registers
+    }
+
+    pub fn map(&mut self, start: u16, end: u16, device: Box<dyn Device>) {
+        self.device_mapper.map(start, end, device);
+    }
+
+    pub fn unmap(&mut self, start: u16, end: u16) {
+        self.device_mapper.unmap(start, end);
+    }
+
     pub fn run(&mut self) {
         // Fetch and execute instructions
         loop {
@@ -86,10 +99,6 @@ impl Processor {
         // Fetch and execute one instruction
         let instruction = self.fetch8();
         self.execute(instruction);
-    }
-
-    pub fn get_registers(&self) -> &Registers {
-        &self.registers
     }
 
     fn fetch8(&mut self) -> u8 {
