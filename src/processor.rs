@@ -88,6 +88,10 @@ impl Processor {
         self.execute(instruction);
     }
 
+    pub fn get_registers(&self) -> &Registers {
+        &self.registers
+    }
+
     fn fetch8(&mut self) -> u8 {
         // Get the byte at the program counter
         let byte = self.device_mapper.read(self.registers.pc);
@@ -119,10 +123,6 @@ impl Processor {
             Flag::Zero => self.registers.status.set(Status::ZERO, status),
             Flag::Carry => self.registers.status.set(Status::CARRY, status),
         }
-    }
-
-    pub fn get_registers(&self) -> &Registers {
-        &self.registers
     }
 
     fn execute(&mut self, opcode: u8) {
