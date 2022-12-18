@@ -498,4 +498,13 @@ mod processor {
             assert_eq!(a, 0x42);
         }
     }
+
+    // Stack instructions
+    mod stack {
+        #![allow(unused_imports)]
+        use crate::opcodes::*;
+        use crate::processor::Processor;
+
+        // TODO: Test stack instructions
+    }
 }
