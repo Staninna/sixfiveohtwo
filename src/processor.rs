@@ -1,5 +1,5 @@
 // Imports
-use crate::memory::Memory;
+use crate::device_mapper::DeviceMapper;
 use crate::opcodes::*;
 use crate::registers::{Flag, Registers, Status};
 
@@ -33,22 +33,29 @@ enum AddressingMode {
 #[derive(Debug)]
 pub struct Processor {
     registers: Registers,
-    memory: Memory,
+    pub device_mapper: DeviceMapper,
 }
 
 impl Processor {
-    pub fn new(memory_size: u16, program: Option<Vec<u8>>) -> Self {
+    pub fn new(program: Option<Vec<u8>>) -> Self {
         // Make the memory and registers
         let registers = Registers::new();
-        let mut memory = Memory::new(memory_size);
+        let mut device_mapper = DeviceMapper::new();
 
         // Load the program into memory
-        if let Some(program) = program {
-            memory.load(program, 0x0000); // DEBUG
+        if program.is_some() {
+            let program = program.unwrap();
+            let offset = 0x8000;
+            for (i, byte) in program.iter().enumerate() {
+                device_mapper.write((i + offset) as u16, *byte);
+            }
         }
 
         // Return the processor
-        Self { registers, memory }
+        Self {
+            registers,
+            device_mapper,
+        }
     }
 
     pub fn run(&mut self) {
@@ -67,7 +74,7 @@ impl Processor {
 
     fn fetch8(&mut self) -> u8 {
         // Get the byte at the program counter
-        let byte = self.memory.read(self.registers.pc);
+        let byte = self.device_mapper.read(self.registers.pc);
 
         // Increment the program counter
         self.registers.pc += 1;
@@ -185,7 +192,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Zero page X
@@ -193,27 +200,27 @@ impl Processor {
                 let x = self.registers.x;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + x as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute X
             AddressingMode::AbsoluteX => {
                 let x = self.registers.x;
                 let address = self.fetch16() + x as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute Y
             AddressingMode::AbsoluteY => {
                 let y = self.registers.y;
                 let address = self.fetch16() + y as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Indirect X
@@ -224,12 +231,12 @@ impl Processor {
 
                 // Get the pointer address
                 let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.memory.read(pointer_address);
-                let high = self.memory.read(pointer_address + 1);
+                let low = self.device_mapper.read(pointer_address);
+                let high = self.device_mapper.read(pointer_address + 1);
 
                 // Get the value
                 let address = u16::from_le_bytes([low, high]);
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Indirect Y
@@ -240,12 +247,12 @@ impl Processor {
 
                 // Get the pointer address
                 let address = 0x0000 + offset as u16;
-                let low = self.memory.read(address);
-                let high = self.memory.read(address + 1);
+                let low = self.device_mapper.read(address);
+                let high = self.device_mapper.read(address + 1);
 
                 // Get the value
                 let address = u16::from_le_bytes([low, high]) + y as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Unknow addressing mode
@@ -282,7 +289,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Zero page y
@@ -290,20 +297,20 @@ impl Processor {
                 let y = self.registers.y;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + y as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute Y
             AddressingMode::AbsoluteY => {
                 let y = self.registers.y;
                 let address = self.fetch16() + y as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Unknow addressing mode
@@ -340,7 +347,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Zero page X
@@ -348,20 +355,20 @@ impl Processor {
                 let x = self.registers.x;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + x as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Absolute X
             AddressingMode::AbsoluteX => {
                 let x = self.registers.x;
                 let address = self.fetch16() + x as u16;
-                self.memory.read(address)
+                self.device_mapper.read(address)
             }
 
             // Unknow addressing mode
@@ -427,8 +434,8 @@ impl Processor {
 
                 // Get the pointer address
                 let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.memory.read(pointer_address);
-                let high = self.memory.read(pointer_address + 1);
+                let low = self.device_mapper.read(pointer_address);
+                let high = self.device_mapper.read(pointer_address + 1);
 
                 // Get the value
                 u16::from_le_bytes([low, high])
@@ -442,8 +449,8 @@ impl Processor {
 
                 // Get the pointer address
                 let address = 0x0000 + offset as u16;
-                let low = self.memory.read(address);
-                let high = self.memory.read(address + 1);
+                let low = self.device_mapper.read(address);
+                let high = self.device_mapper.read(address + 1);
 
                 // Get the value
                 u16::from_le_bytes([low, high]) + y as u16
@@ -456,7 +463,7 @@ impl Processor {
         };
 
         // Write value
-        self.memory.write(address, self.registers.acc);
+        self.device_mapper.write(address, self.registers.acc);
     }
 
     // Store X
@@ -485,7 +492,7 @@ impl Processor {
         };
 
         // Write value
-        self.memory.write(address, self.registers.x);
+        self.device_mapper.write(address, self.registers.x);
     }
 
     // Store Y
@@ -514,7 +521,7 @@ impl Processor {
         };
 
         // Write value
-        self.memory.write(address, self.registers.y);
+        self.device_mapper.write(address, self.registers.y);
     }
 
     // Register transfers
