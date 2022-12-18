@@ -107,7 +107,7 @@ pub struct Registers {
 impl Registers {
     pub fn new() -> Self {
         Self {
-            pc: 0x0000,
+            pc: 0x8000,
             sp: 0x00,
             acc: 0x00,
             x: 0x00,
