@@ -37,18 +37,34 @@ pub struct Processor {
 }
 
 impl Processor {
-    pub fn new(program: Option<Vec<u8>>) -> Self {
+    pub fn new(program: Vec<u8>) -> Self {
         // Make the memory and registers
-        let registers = Registers::new();
+        let mut registers = Registers::new();
         let mut device_mapper = DeviceMapper::new();
 
         // Load the program into memory
-        if program.is_some() {
-            let program = program.unwrap();
-            let offset = 0x8000;
-            for (i, byte) in program.iter().enumerate() {
-                device_mapper.write((i + offset) as u16, *byte);
-            }
+        let offset = 0x8000;
+        registers.pc = offset;
+        for (i, byte) in program.iter().enumerate() {
+            device_mapper.write((i + offset as usize) as u16, *byte);
+        }
+
+        // Return the processor
+        Self {
+            registers,
+            device_mapper,
+        }
+    }
+
+    pub fn new_offset(program: Vec<u8>, offset: u16) -> Self {
+        // Make the memory and registers
+        let mut registers = Registers::new();
+        let mut device_mapper = DeviceMapper::new();
+
+        // Load the program into memory
+        registers.pc = offset;
+        for (i, byte) in program.iter().enumerate() {
+            device_mapper.write((i + offset as usize) as u16, *byte);
         }
 
         // Return the processor
