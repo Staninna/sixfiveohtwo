@@ -88,7 +88,7 @@ impl Processor {
     }
 
     pub fn run(&mut self) {
-        // Fetch and execute instructions
+        // Fetch and execute opcodes
         loop {
             let instruction = self.fetch8();
             self.execute(instruction);
@@ -137,7 +137,7 @@ impl Processor {
     fn execute(&mut self, opcode: u8) {
         // Execute the instruction
         match opcode {
-            // Load/store instructions
+            // Load/store opcodes
 
             // Load accumulator
             LDA_IM => self.lda(AddressingMode::Immediate),
@@ -203,9 +203,9 @@ impl Processor {
         }
     }
 
-    // Instructions
+    // Opcodes
 
-    // Load/store instructions
+    // Load/store opcodes
 
     // Load accumulator
     fn lda(&mut self, mode: AddressingMode) {
@@ -549,7 +549,7 @@ impl Processor {
         self.device_mapper.write(address, self.registers.y);
     }
 
-    // Register transfers
+    // Register transfers opcodes
 
     // Transfer accumulator to X
     fn tax(&mut self) {
