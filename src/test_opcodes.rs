@@ -369,4 +369,86 @@ mod processor {
         let y = processor.get_registers().y;
         assert_eq!(y, 0x42);
     }
+
+    // Transfer instructions
+
+    #[test]
+    // Test TAX instruction
+    fn test_tax() {
+        let mut processor = Processor::new(
+            0xFFFF, // 64KB
+            Some(vec![
+                LDA_IM, 0x42, // Load A with 0x42
+                TAX,  //-------- Transfer A to X
+            ]),
+        );
+
+        // Execute instructions
+        processor.step();
+        processor.step();
+
+        // Check X
+        let x = processor.get_registers().x;
+        assert_eq!(x, 0x42);
+    }
+
+    #[test]
+    // Test TAY instruction
+    fn test_tay() {
+        let mut processor = Processor::new(
+            0xFFFF, // 64KB
+            Some(vec![
+                LDA_IM, 0x42, // Load A with 0x42
+                TAY,  //-------- Transfer A to Y
+            ]),
+        );
+
+        // Execute instructions
+        processor.step();
+        processor.step();
+
+        // Check Y
+        let y = processor.get_registers().y;
+        assert_eq!(y, 0x42);
+    }
+
+    #[test]
+    // Test TXA instruction
+    fn test_txa() {
+        let mut processor = Processor::new(
+            0xFFFF, // 64KB
+            Some(vec![
+                LDX_IM, 0x42, // Load X with 0x42
+                TXA,  //-------- Transfer X to A
+            ]),
+        );
+
+        // Execute instructions
+        processor.step();
+        processor.step();
+
+        // Check A
+        let a = processor.get_registers().acc;
+        assert_eq!(a, 0x42);
+    }
+
+    #[test]
+    // Test TYA instruction
+    fn test_tya() {
+        let mut processor = Processor::new(
+            0xFFFF, // 64KB
+            Some(vec![
+                LDY_IM, 0x42, // Load Y with 0x42
+                TYA,  //-------- Transfer Y to A
+            ]),
+        );
+
+        // Execute instructions
+        processor.step();
+        processor.step();
+
+        // Check A
+        let a = processor.get_registers().acc;
+        assert_eq!(a, 0x42);
+    }
 }

@@ -153,6 +153,20 @@ impl Processor {
             STY_ZPX => self.sty(AddressingMode::ZeroPageX),
             STY_ABS => self.sty(AddressingMode::Absolute),
 
+            // Register transfers
+
+            // Transfer accumulator to X
+            TAX => self.tax(),
+
+            // Transfer accumulator to Y
+            TAY => self.tay(),
+
+            // Transfer X to accumulator
+            TXA => self.txa(),
+
+            // Transfer Y to accumulator
+            TYA => self.tya(),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -504,5 +518,87 @@ impl Processor {
 
         // Write value
         self.memory.write(address, self.registers.y);
+    }
+
+    // Register transfers
+
+    // Transfer accumulator to X
+    fn tax(&mut self) {
+        // Write X
+        self.registers.x = self.registers.acc;
+
+        // Write zero flag
+        if self.registers.x == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.x & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Transfer accumulator to Y
+    fn tay(&mut self) {
+        // Write Y
+        self.registers.y = self.registers.acc;
+
+        // Write zero flag
+        if self.registers.y == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.y & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Transfer X to accumulator
+    fn txa(&mut self) {
+        // Write accumulator
+        self.registers.acc = self.registers.x;
+
+        // Write zero flag
+        if self.registers.acc == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.acc & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Transfer Y to accumulator
+    fn tya(&mut self) {
+        // Write accumulator
+        self.registers.acc = self.registers.y;
+
+        // Write zero flag
+        if self.registers.acc == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.acc & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
     }
 }
