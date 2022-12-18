@@ -75,7 +75,7 @@ impl Processor {
         }
     }
 
-    pub fn get_registers(&self) -> &Registers {
+    pub fn read_registers(&self) -> &Registers {
         &self.registers
     }
 
@@ -85,6 +85,14 @@ impl Processor {
 
     pub fn unmap(&mut self, start: u16, end: u16) {
         self.device_mapper.unmap(start, end);
+    }
+
+    fn read(&mut self, address: u16) -> u8 {
+        self.device_mapper.read(address)
+    }
+
+    fn write(&mut self, address: u16, data: u8) {
+        self.device_mapper.write(address, data);
     }
 
     pub fn run(&mut self) {
@@ -102,8 +110,8 @@ impl Processor {
     }
 
     fn fetch8(&mut self) -> u8 {
-        // Get the byte at the program counter
-        let byte = self.device_mapper.read(self.registers.pc);
+        // Read the byte at the program counter
+        let byte = self.read(self.registers.pc);
 
         // Increment the program counter
         self.registers.pc += 1;
@@ -113,7 +121,7 @@ impl Processor {
     }
 
     fn fetch16(&mut self) -> u16 {
-        // Get the two bytes at the program counter least significant bit name low and high
+        // Read the two bytes at the program counter least significant bit name low and high
         let high = self.fetch8();
         let low = self.fetch8();
 
@@ -182,7 +190,7 @@ impl Processor {
             STY_ZPX => self.sty(AddressingMode::ZeroPageX),
             STY_ABS => self.sty(AddressingMode::Absolute),
 
-            // Register transfers
+            // Register transfers opcodes
 
             // Transfer accumulator to X
             TAX => self.tax(),
@@ -195,6 +203,26 @@ impl Processor {
 
             // Transfer Y to accumulator
             TYA => self.tya(),
+
+            // Stack opcodes
+
+            // Transfer stack pointer to X
+            TSX => self.tsx(),
+
+            // Transfer X to stack pointer
+            TXS => self.txs(),
+
+            // Push accumulator on stack
+            PHA => self.pha(),
+
+            // Push processor status on stack
+            PHP => self.php(),
+
+            // Pull accumulator from stack
+            PLA => self.pla(),
+
+            // Pull processor status from stack
+            PLP => self.plp(),
 
             // Unknow opcode
             _ => {
@@ -217,7 +245,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Zero page X
@@ -225,59 +253,59 @@ impl Processor {
                 let x = self.registers.x;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + x as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute X
             AddressingMode::AbsoluteX => {
                 let x = self.registers.x;
                 let address = self.fetch16() + x as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute Y
             AddressingMode::AbsoluteY => {
                 let y = self.registers.y;
                 let address = self.fetch16() + y as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Indirect X
             AddressingMode::IndirectX => {
-                // Get the offset
+                // Read the offset
                 let x = self.registers.x;
                 let offset = self.fetch8();
 
-                // Get the pointer address
+                // Read the pointer address
                 let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.device_mapper.read(pointer_address);
-                let high = self.device_mapper.read(pointer_address + 1);
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
 
-                // Get the value
+                // Read the value
                 let address = u16::from_le_bytes([low, high]);
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Indirect Y
             AddressingMode::IndirectY => {
-                // Get the offset
+                // Read the offset
                 let y = self.registers.y;
                 let offset = self.fetch8();
 
-                // Get the pointer address
+                // Read the pointer address
                 let address = 0x0000 + offset as u16;
-                let low = self.device_mapper.read(address);
-                let high = self.device_mapper.read(address + 1);
+                let low = self.read(address);
+                let high = self.read(address + 1);
 
-                // Get the value
+                // Read the value
                 let address = u16::from_le_bytes([low, high]) + y as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Unknow addressing mode
@@ -314,7 +342,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Zero page y
@@ -322,20 +350,20 @@ impl Processor {
                 let y = self.registers.y;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + y as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute Y
             AddressingMode::AbsoluteY => {
                 let y = self.registers.y;
                 let address = self.fetch16() + y as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Unknow addressing mode
@@ -372,7 +400,7 @@ impl Processor {
             AddressingMode::ZeroPage => {
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Zero page X
@@ -380,20 +408,20 @@ impl Processor {
                 let x = self.registers.x;
                 let offset = self.fetch8();
                 let address = 0x0000 + offset as u16 + x as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute
             AddressingMode::Absolute => {
                 let address = self.fetch16();
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Absolute X
             AddressingMode::AbsoluteX => {
                 let x = self.registers.x;
                 let address = self.fetch16() + x as u16;
-                self.device_mapper.read(address)
+                self.read(address)
             }
 
             // Unknow addressing mode
@@ -453,31 +481,31 @@ impl Processor {
 
             // Indirect X
             AddressingMode::IndirectX => {
-                // Get the offset
+                // Read the offset
                 let x = self.registers.x;
                 let offset = self.fetch8();
 
-                // Get the pointer address
+                // Read the pointer address
                 let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.device_mapper.read(pointer_address);
-                let high = self.device_mapper.read(pointer_address + 1);
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
 
-                // Get the value
+                // Read the value
                 u16::from_le_bytes([low, high])
             }
 
             // Indirect Y
             AddressingMode::IndirectY => {
-                // Get the offset
+                // Read the offset
                 let y = self.registers.y;
                 let offset = self.fetch8();
 
-                // Get the pointer address
+                // Read the pointer address
                 let address = 0x0000 + offset as u16;
-                let low = self.device_mapper.read(address);
-                let high = self.device_mapper.read(address + 1);
+                let low = self.read(address);
+                let high = self.read(address + 1);
 
-                // Get the value
+                // Read the value
                 u16::from_le_bytes([low, high]) + y as u16
             }
 
@@ -488,7 +516,7 @@ impl Processor {
         };
 
         // Write value
-        self.device_mapper.write(address, self.registers.acc);
+        self.write(address, self.registers.acc);
     }
 
     // Store X
@@ -517,7 +545,7 @@ impl Processor {
         };
 
         // Write value
-        self.device_mapper.write(address, self.registers.x);
+        self.write(address, self.registers.x);
     }
 
     // Store Y
@@ -546,7 +574,7 @@ impl Processor {
         };
 
         // Write value
-        self.device_mapper.write(address, self.registers.y);
+        self.write(address, self.registers.y);
     }
 
     // Register transfers opcodes
@@ -629,5 +657,103 @@ impl Processor {
         } else {
             self.write_flag(NEGATIVE, false)
         }
+    }
+
+    // Stack opcodes
+
+    // Transfer stack pointer to X
+    fn tsx(&mut self) {
+        // Write X
+        self.registers.x = self.registers.sp;
+
+        // Write zero falg
+        if self.registers.x == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.x & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Transfer X to stack pointer
+    fn txs(&mut self) {
+        // Write Sp
+        self.registers.sp = self.registers.x;
+    }
+
+    // Push accumulator on stack
+    fn pha(&mut self) {
+        // Read accumulator and sp
+        let acc = self.registers.acc;
+        let sp = self.registers.sp;
+
+        // Push acc
+        self.write(0x0100 + sp as u16, acc);
+
+        // Decrement the sp
+        let _ = self.registers.sp - 1;
+    }
+
+    // Push processor status on stack
+    fn php(&mut self) {
+        // Read status and sp
+        let status = self.registers.status.bits();
+        let sp = self.registers.sp;
+
+        // Push status
+        self.write(0x0100 + sp as u16, status);
+
+        // Decrement the sp
+        let _ = self.registers.sp - 1;
+    }
+
+    // Pull accumulator from stack
+    fn pla(&mut self) {
+        // Read sp
+        let sp = self.registers.sp;
+
+        // Pull accumulator
+        let acc = self.read(0x0100 + sp as u16);
+
+        // Write accumulator
+        self.registers.acc = acc;
+
+        // Increment sp
+        let _ = self.registers.sp + 1;
+
+        // Write zero falg
+        if self.registers.x == 0x00 {
+            self.write_flag(ZERO, true)
+        } else {
+            self.write_flag(ZERO, false)
+        }
+
+        // Write negative flag
+        if self.registers.x & 0x80 == 0x80 {
+            self.write_flag(NEGATIVE, true)
+        } else {
+            self.write_flag(NEGATIVE, false)
+        }
+    }
+
+    // Pull processor status from stack
+    fn plp(&mut self) {
+        // Read sp
+        let sp = self.registers.sp;
+
+        // Pull status
+        let raw_status = self.read(0x0100 + sp as u16);
+
+        // Write status
+        self.registers.status = match Status::from_bits(raw_status) {
+            Some(status) => status,
+            None => unreachable!("Unreachable status"),
+        };
     }
 }
