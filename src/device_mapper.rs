@@ -32,9 +32,9 @@ impl DeviceMapper {
     pub fn new() -> Self {
         let ram = Box::new(Ram::new(0xFFFF));
 
-        Self {
-            regions: vec![Region::new(0x0000, 0xFFFF, ram)],
-        }
+        let regions = vec![Region::new(0x0000, 0xFFFF, ram)];
+
+        Self { regions }
     }
 
     pub fn map(&mut self, start: u16, end: u16, device: Box<dyn Device>) {
@@ -90,7 +90,7 @@ impl fmt::Debug for DeviceMapper {
                 " {:04X}-{:04X}: {},",
                 region.start,
                 region.end,
-                region.device.get_type()
+                region.device.read_type()
             )?;
         }
         write!(f, "}}")
