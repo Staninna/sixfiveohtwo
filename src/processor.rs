@@ -29,10 +29,7 @@ enum AddressingMode {
 
 // Structs
 
-///////////////
-// Processor //
-///////////////
-
+// Struct for the processor
 #[derive(Debug)]
 pub struct Processor {
     registers: Registers,

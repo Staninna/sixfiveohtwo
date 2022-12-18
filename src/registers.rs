@@ -3,10 +3,7 @@ use bitflags::bitflags;
 
 // Structs
 
-//////////////////
-// Status flags //
-//////////////////
-
+// Struct for the flags
 pub enum Flag {
     Negative,
     Overflow,
@@ -94,10 +91,6 @@ impl Status {
         status
     }
 }
-
-///////////////
-// Registers //
-///////////////
 
 // Struct for the registers
 #[derive(Debug)]

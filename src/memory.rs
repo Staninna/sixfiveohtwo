@@ -3,10 +3,6 @@ use std::fmt;
 
 // Structs
 
-////////////
-// Memory //
-////////////
-
 // Struct for the memory
 pub struct Memory {
     memory: Vec<u8>,
