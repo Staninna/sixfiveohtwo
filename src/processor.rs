@@ -79,6 +79,10 @@ impl Processor {
         &self.registers
     }
 
+    pub fn read_memory(&self, address: u16) -> u8 {
+        self.device_mapper.read(address)
+    }
+
     pub fn map(&mut self, start: u16, end: u16, device: Box<dyn Device>) {
         self.device_mapper.map(start, end, device);
     }
@@ -295,11 +299,11 @@ impl Processor {
             // Indirect Y
             AddressingMode::IndirectY => {
                 // Read the offset
-                let y = self.registers.y;
-                let offset = self.fetch8();
+                let y = self.registers.y; // 0x02
+                let offset = self.fetch8(); // 0x02
 
                 // Read the pointer address
-                let address = 0x0000 + offset as u16;
+                let address = 0x0000 + offset as u16; // 0x0002
                 let low = self.read(address);
                 let high = self.read(address + 1);
 
