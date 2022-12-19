@@ -697,7 +697,7 @@ impl Processor {
         self.write(0x0100 + sp as u16, acc);
 
         // Decrement the sp
-        let _ = self.registers.sp - 1;
+        let _sp = self.registers.sp.wrapping_sub(1);
     }
 
     // Push processor status on stack
@@ -710,7 +710,7 @@ impl Processor {
         self.write(0x0100 + sp as u16, status);
 
         // Decrement the sp
-        let _ = self.registers.sp - 1;
+        let _sp = self.registers.sp.wrapping_sub(1);
     }
 
     // Pull accumulator from stack
@@ -725,7 +725,7 @@ impl Processor {
         self.registers.acc = acc;
 
         // Increment sp
-        let _ = self.registers.sp + 1;
+        let _sp = self.registers.sp.wrapping_add(1);
 
         // Write zero falg
         if self.registers.x == 0x00 {
