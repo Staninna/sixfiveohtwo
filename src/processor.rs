@@ -311,13 +311,13 @@ impl Processor {
             // Indirect Y
             AddressingMode::IndirectY => {
                 // Read the offset
-                let y = self.registers.y; // 0x02
-                let offset = self.fetch8(); // 0x02
+                let y = self.registers.y;
+                let offset = self.fetch8();
 
                 // Read the pointer address
-                let address = 0x0000 + offset as u16; // 0x0002
-                let low = self.read(address);
-                let high = self.read(address + 1);
+                let pointer_address = 0x0000 + offset as u16;
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
 
                 // Read the value
                 let address = u16::from_le_bytes([low, high]) + y as u16;
@@ -517,9 +517,9 @@ impl Processor {
                 let offset = self.fetch8();
 
                 // Read the pointer address
-                let address = 0x0000 + offset as u16;
-                let low = self.read(address);
-                let high = self.read(address + 1);
+                let pointer_address = 0x0000 + offset as u16;
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
 
                 // Read the value
                 u16::from_le_bytes([low, high]) + y as u16
@@ -774,30 +774,59 @@ impl Processor {
     }
 
     fn and(&mut self, mode: AddressingMode) {
-        let idk_yet = match mode {
-            AddressingMode::Immediate => {
-                todo!()
-            }
+        let value = match mode {
+            AddressingMode::Immediate => self.fetch8(),
             AddressingMode::ZeroPage => {
-                todo!()
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16;
+                self.read(address)
             }
             AddressingMode::ZeroPageX => {
-                todo!()
+                let x = self.registers.x;
+                let offset = self.fetch8();
+                let address = 0x0000 + offset as u16 + x as u16;
+                self.read(address)
             }
             AddressingMode::Absolute => {
-                todo!()
+                let address = self.fetch16();
+                self.read(address)
             }
             AddressingMode::AbsoluteX => {
-                todo!()
+                let x = self.registers.x;
+                let address = self.fetch16() + x as u16;
+                self.read(address)
             }
             AddressingMode::AbsoluteY => {
-                todo!()
+                let y = self.registers.y;
+                let address = self.fetch16() + y as u16;
+                self.read(address)
             }
             AddressingMode::IndirectX => {
-                todo!()
+                // Read the offset
+                let x = self.registers.x;
+                let offset = self.fetch8();
+
+                // Read the pointer address
+                let pointer_address = 0x0000 + offset as u16 + x as u16;
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
+
+                // Read the value
+                let address = u16::from_le_bytes([low, high]);
+                self.read(address)
             }
             AddressingMode::IndirectY => {
-                todo!()
+                let y = self.registers.y;
+                let offset = self.fetch8();
+
+                // Read the pointer address
+                let pointer_address = 0x0000 + offset as u16;
+                let low = self.read(pointer_address);
+                let high = self.read(pointer_address + 1);
+
+                // Read the value
+                let address = u16::from_le_bytes([low, high]) + y as u16;
+                self.read(address)
             }
 
             // Unknow addressing mode
