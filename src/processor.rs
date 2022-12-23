@@ -228,6 +228,18 @@ impl Processor {
             // Pull processor status from stack
             PLP => self.plp(),
 
+            // Logical opcodes
+
+            // Logical AND
+            AND_IM => self.and(AddressingMode::Immediate),
+            AND_ZP => self.and(AddressingMode::ZeroPage),
+            AND_ZPX => self.and(AddressingMode::ZeroPageX),
+            AND_ABS => self.and(AddressingMode::AbsoluteX),
+            AND_ABSX => self.and(AddressingMode::AbsoluteX),
+            AND_ABSY => self.and(AddressingMode::AbsoluteY),
+            AND_INDX => self.and(AddressingMode::IndirectX),
+            AND_INDY => self.and(AddressingMode::IndirectY),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -758,6 +770,40 @@ impl Processor {
         self.registers.status = match Status::from_bits(raw_status) {
             Some(status) => status,
             None => unreachable!("Unreachable status"),
+        };
+    }
+
+    fn and(&mut self, mode: AddressingMode) {
+        let idk_yet = match mode {
+            AddressingMode::Immediate => {
+                todo!()
+            }
+            AddressingMode::ZeroPage => {
+                todo!()
+            }
+            AddressingMode::ZeroPageX => {
+                todo!()
+            }
+            AddressingMode::Absolute => {
+                todo!()
+            }
+            AddressingMode::AbsoluteX => {
+                todo!()
+            }
+            AddressingMode::AbsoluteY => {
+                todo!()
+            }
+            AddressingMode::IndirectX => {
+                todo!()
+            }
+            AddressingMode::IndirectY => {
+                todo!()
+            }
+
+            // Unknow addressing mode
+            _ => {
+                unreachable!("Unreachable addressing mode")
+            }
         };
     }
 }

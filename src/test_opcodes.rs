@@ -109,6 +109,7 @@ mod load_store {
         }
 
         #[test]
+        // Test the accumulator load indirect x instruction
         fn test_lda_indirect_x() {
             let mut processor = Processor::new_offset(
                 vec![
@@ -128,6 +129,7 @@ mod load_store {
         }
 
         #[test]
+        // Test the accumulator load indirect y instruction
         fn test_lda_indirect_y() {
             let mut processor = Processor::new_offset(
                 vec![

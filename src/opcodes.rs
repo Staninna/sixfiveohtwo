@@ -84,3 +84,17 @@ mod stack {
     // Pull processor status from stack
     pub const PLP: u8 = 0x28;
 }
+
+// Logical opcodes
+pub use logical::*;
+mod logical {
+    // Logical AND
+    pub const AND_IM: u8 = 0x29;
+    pub const AND_ZP: u8 = 0x25;
+    pub const AND_ZPX: u8 = 0x35;
+    pub const AND_ABS: u8 = 0x2D;
+    pub const AND_ABSX: u8 = 0x3D;
+    pub const AND_ABSY: u8 = 0x39;
+    pub const AND_INDX: u8 = 0x21;
+    pub const AND_INDY: u8 = 0x31;
+}
