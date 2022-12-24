@@ -3,18 +3,6 @@ use bitflags::bitflags;
 
 // Structs
 
-// Struct for the flags
-pub enum Flag {
-    Negative,
-    Overflow,
-    Unused,
-    BreakCommand,
-    DecimalMode,
-    Interrupt,
-    Zero,
-    Carry,
-}
-
 // Obivous way to set flasgs in Status
 struct StatusFlags {
     negative: bool,
@@ -30,14 +18,14 @@ struct StatusFlags {
 // Create a bitflag struct for the Status
 bitflags! {
     pub struct Status: u8 {
-        const NEGATIVE =      0b1000_0000;
-        const OVERFLOW =      0b0100_0000;
-        const UNUSED =        0b0010_0000;
-        const BREAK_COMMAND = 0b0001_0000;
-        const DECIMAL_MODE =  0b0000_1000;
-        const INTERRUPT =     0b0000_0100;
-        const ZERO =          0b0000_0010;
-        const CARRY =         0b0000_0001;
+        const NEGATIVE =  0b1000_0000;
+        const OVERFLOW =  0b0100_0000;
+        const UNUSED =    0b0010_0000;
+        const BREAK =     0b0001_0000;
+        const DECIMAL =   0b0000_1000;
+        const INTERRUPT = 0b0000_0100;
+        const ZERO =      0b0000_0010;
+        const CARRY =     0b0000_0001;
     }
 }
 
@@ -72,10 +60,10 @@ impl Status {
             status |= Status::UNUSED;
         }
         if flags.break_command {
-            status |= Status::BREAK_COMMAND;
+            status |= Status::BREAK;
         }
         if flags.decimal_mode {
-            status |= Status::DECIMAL_MODE;
+            status |= Status::DECIMAL;
         }
         if flags.interrupt {
             status |= Status::INTERRUPT;
@@ -93,7 +81,6 @@ impl Status {
 }
 
 // Struct for the registers
-#[derive(Debug)]
 pub struct Registers {
     pub pc: u16,        // Program counter
     pub sp: u8,         // Stack pointer

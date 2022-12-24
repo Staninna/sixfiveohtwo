@@ -1,244 +1,153 @@
-// Imports
 use crate::device::Device;
 use crate::device_mapper::DeviceMapper;
 use crate::opcodes::*;
-use crate::registers::{Flag, Registers, Status};
+use crate::registers::{Registers, Status};
 
-// Constants
-const NEGATIVE: Flag = Flag::Negative;
-const OVERFLOW: Flag = Flag::Overflow;
-const UNUSED: Flag = Flag::Unused;
-const BREAK_COMMAND: Flag = Flag::BreakCommand;
-const DECIMAL_MODE: Flag = Flag::DecimalMode;
-const INTERRUPT: Flag = Flag::Interrupt;
-const ZERO: Flag = Flag::Zero;
-const CARRY: Flag = Flag::Carry;
-
-// Enums
-
-enum AddressingMode {
-    Immediate,
-    ZeroPage,
-    ZeroPageX,
-    ZeroPageY,
-    Absolute,
-    AbsoluteX,
-    AbsoluteY,
-    IndirectX,
-    IndirectY,
-}
-
-// Structs
-
-// Struct for the processor
-#[derive(Debug)]
 pub struct Processor {
     registers: Registers,
     device_mapper: DeviceMapper,
 }
 
 impl Processor {
+    // Public functions
+
+    // Create a new processor with the given program loaded into RAM
     pub fn new(program: Vec<u8>) -> Self {
-        // Make the memory and registers
+        // Create RAM (divice_mapper) and registers
         let mut registers = Registers::new();
         let mut device_mapper = DeviceMapper::new();
 
-        // Load the program into memory
-        let offset = 0x8000;
+        // Load the program
+        let offset = 0x0000;
         registers.pc = offset;
         for (i, byte) in program.iter().enumerate() {
             device_mapper.write((i + offset as usize) as u16, *byte);
         }
 
-        // Return the processor
         Self {
             registers,
             device_mapper,
         }
     }
 
-    pub fn new_offset(program: Vec<u8>, offset: u16) -> Self {
-        // Make the memory and registers
-        let mut registers = Registers::new();
-        let mut device_mapper = DeviceMapper::new();
-
-        // Load the program into memory
-        registers.pc = offset;
-        for (i, byte) in program.iter().enumerate() {
-            device_mapper.write((i + offset as usize) as u16, *byte);
-        }
-
-        // Return the processor
-        Self {
-            registers,
-            device_mapper,
-        }
-    }
-
-    pub fn read_registers(&self) -> &Registers {
-        &self.registers
-    }
-
-    pub fn read_memory(&self, address: u16) -> u8 {
-        self.device_mapper.read(address)
-    }
-
+    // Map a device to the given address range
     pub fn map(&mut self, start: u16, end: u16, device: Box<dyn Device>) {
         self.device_mapper.map(start, end, device);
     }
 
+    // Unmap a device from the given address range
     pub fn unmap(&mut self, start: u16, end: u16) {
         self.device_mapper.unmap(start, end);
     }
 
-    fn read(&mut self, address: u16) -> u8 {
-        self.device_mapper.read(address)
-    }
-
-    fn write(&mut self, address: u16, data: u8) {
-        self.device_mapper.write(address, data);
-    }
-
+    // Run the processor until the program crashes
     pub fn run(&mut self) {
-        // Fetch and execute opcodes
         loop {
             let instruction = self.fetch8();
             self.execute(instruction);
         }
     }
 
+    // Run the processor for one instruction
     pub fn step(&mut self) {
-        // Fetch and execute one instruction
         let instruction = self.fetch8();
         self.execute(instruction);
     }
 
+    // Private functions
+
+    // Read a byte from the given address
+    fn read(&mut self, address: u16) -> u8 {
+        self.device_mapper.read(address)
+    }
+
+    // Write a byte to the given address
+    fn write(&mut self, address: u16, byte: u8) {
+        self.device_mapper.write(address, byte);
+    }
+
+    // Fetch an 8-bit value from the program counter
     fn fetch8(&mut self) -> u8 {
-        // Read the byte at the program counter
+        // Read the byte at the PC
         let byte = self.read(self.registers.pc);
 
-        // Increment the program counter
+        // Increment the PC
         self.registers.pc += 1;
 
-        // Return the byte
         byte
     }
 
+    // Fetch a 16-bit value from the program counter
     fn fetch16(&mut self) -> u16 {
-        // Read the two bytes at the program counter least significant bit name low and high
+        // Read the two bytes at the PC
         let high = self.fetch8();
         let low = self.fetch8();
 
-        // Return the bytes combined
+        // Return as u16
         u16::from_le_bytes([low, high])
     }
 
-    fn write_flag(&mut self, flag: Flag, status: bool) {
-        match flag {
-            Flag::Negative => self.registers.status.set(Status::NEGATIVE, status),
-            Flag::Overflow => self.registers.status.set(Status::OVERFLOW, status),
-            Flag::Unused => self.registers.status.set(Status::UNUSED, status),
-            Flag::BreakCommand => self.registers.status.set(Status::BREAK_COMMAND, status),
-            Flag::DecimalMode => self.registers.status.set(Status::DECIMAL_MODE, status),
-            Flag::Interrupt => self.registers.status.set(Status::INTERRUPT, status),
-            Flag::Zero => self.registers.status.set(Status::ZERO, status),
-            Flag::Carry => self.registers.status.set(Status::CARRY, status),
-        }
-    }
-
+    // Execute the given opcode
     fn execute(&mut self, opcode: u8) {
-        // Execute the instruction
         match opcode {
-            // Load/store opcodes
+            // Load/Store
 
             // Load accumulator
-            LDA_IM => self.lda(AddressingMode::Immediate),
-            LDA_ZP => self.lda(AddressingMode::ZeroPage),
-            LDA_ZPX => self.lda(AddressingMode::ZeroPageX),
-            LDA_ABS => self.lda(AddressingMode::Absolute),
-            LDA_ABSX => self.lda(AddressingMode::AbsoluteX),
-            LDA_ABSY => self.lda(AddressingMode::AbsoluteY),
-            LDA_INDX => self.lda(AddressingMode::IndirectX),
-            LDA_INDY => self.lda(AddressingMode::IndirectY),
+            LDA_IM => self.lda_immediate(),
+            LDA_ZP => self.lda_zero_page(),
+            LDA_ZPX => self.lda_zero_page_x(),
+            LDA_ABS => self.lda_absolute(),
+            LDA_ABSX => self.lda_absolute_x(),
+            LDA_ABSY => self.lda_absolute_y(),
+            LDA_INDX => self.lda_indirect_x(),
+            LDA_INDY => self.lda_indirect_y(),
 
-            // Load X
-            LDX_IM => self.ldx(AddressingMode::Immediate),
-            LDX_ZP => self.ldx(AddressingMode::ZeroPage),
-            LDX_ZPY => self.ldx(AddressingMode::ZeroPageY),
-            LDX_ABS => self.ldx(AddressingMode::Absolute),
-            LDX_ABSY => self.ldx(AddressingMode::AbsoluteY),
+            // Load X register
+            LDX_IM => self.ldx_immediate(),
+            LDX_ZP => self.ldx_zero_page(),
+            LDX_ZPY => self.ldx_zero_page_y(),
+            LDX_ABS => self.ldx_absolute(),
+            LDX_ABSY => self.ldx_absolute_y(),
 
-            // Load y
-            LDY_IM => self.ldy(AddressingMode::Immediate),
-            LDY_ZP => self.ldy(AddressingMode::ZeroPage),
-            LDY_ZPX => self.ldy(AddressingMode::ZeroPageX),
-            LDY_ABS => self.ldy(AddressingMode::Absolute),
-            LDY_ABSX => self.ldy(AddressingMode::AbsoluteX),
+            // Load Y register
+            LDY_IM => self.ldy_immediate(),
+            LDY_ZP => self.ldy_zero_page(),
+            LDY_ZPX => self.ldy_zero_page_x(),
+            LDY_ABS => self.ldy_absolute(),
+            LDY_ABSX => self.ldy_absolute_x(),
 
             // Store accumulator
-            STA_ZP => self.sta(AddressingMode::ZeroPage),
-            STA_ZPX => self.sta(AddressingMode::ZeroPageX),
-            STA_ABS => self.sta(AddressingMode::Absolute),
-            STA_ABSX => self.sta(AddressingMode::AbsoluteX),
-            STA_ABSY => self.sta(AddressingMode::AbsoluteY),
-            STA_INDX => self.sta(AddressingMode::IndirectX),
-            STA_INDY => self.sta(AddressingMode::IndirectY),
+            STA_ZP => self.sta_zero_page(),
+            STA_ZPX => self.sta_zero_page_x(),
+            STA_ABS => self.sta_absolute(),
+            STA_ABSX => self.sta_absolute_x(),
+            STA_ABSY => self.sta_absolute_y(),
+            STA_INDX => self.sta_indirect_x(),
+            STA_INDY => self.sta_indirect_y(),
 
-            // Store X
-            STX_ZP => self.stx(AddressingMode::ZeroPage),
-            STX_ZPY => self.stx(AddressingMode::ZeroPageY),
-            STX_ABS => self.stx(AddressingMode::Absolute),
+            // Store X register
+            STX_ZP => self.stx_zero_page(),
+            STX_ZPY => self.stx_zero_page_y(),
+            STX_ABS => self.stx_absolute(),
 
-            // Store Y
-            STY_ZP => self.sty(AddressingMode::ZeroPage),
-            STY_ZPX => self.sty(AddressingMode::ZeroPageX),
-            STY_ABS => self.sty(AddressingMode::Absolute),
+            // Store Y register
+            STY_ZP => self.sty_zero_page(),
+            STY_ZPX => self.sty_zero_page_x(),
+            STY_ABS => self.sty_absolute(),
 
-            // Register transfers opcodes
+            // Transfer
 
-            // Transfer accumulator to X
+            // Transfer accumulator to X register
             TAX => self.tax(),
 
-            // Transfer accumulator to Y
+            // Transfer accumulator to Y register
             TAY => self.tay(),
 
-            // Transfer X to accumulator
+            // Transfer X register to accumulator
             TXA => self.txa(),
 
-            // Transfer Y to accumulator
+            // Transfer Y register to accumulator
             TYA => self.tya(),
-
-            // Stack opcodes
-
-            // Transfer stack pointer to X
-            TSX => self.tsx(),
-
-            // Transfer X to stack pointer
-            TXS => self.txs(),
-
-            // Push accumulator on stack
-            PHA => self.pha(),
-
-            // Push processor status on stack
-            PHP => self.php(),
-
-            // Pull accumulator from stack
-            PLA => self.pla(),
-
-            // Pull processor status from stack
-            PLP => self.plp(),
-
-            // Logical opcodes
-
-            // Logical AND
-            AND_IM => self.and(AddressingMode::Immediate),
-            AND_ZP => self.and(AddressingMode::ZeroPage),
-            AND_ZPX => self.and(AddressingMode::ZeroPageX),
-            AND_ABS => self.and(AddressingMode::AbsoluteX),
-            AND_ABSX => self.and(AddressingMode::AbsoluteX),
-            AND_ABSY => self.and(AddressingMode::AbsoluteY),
-            AND_INDX => self.and(AddressingMode::IndirectX),
-            AND_INDY => self.and(AddressingMode::IndirectY),
 
             // Unknow opcode
             _ => {
@@ -247,592 +156,472 @@ impl Processor {
         }
     }
 
-    // Opcodes
+    // Addressing modes
 
-    // Load/store opcodes
+    fn immediate(&mut self) -> u8 {
+        self.fetch8()
+    }
+
+    fn zero_page_read(&mut self) -> u8 {
+        let address = self.fetch8();
+        self.read(address as u16)
+    }
+
+    fn zero_page_addr(&mut self) -> u16 {
+        self.fetch8() as u16
+    }
+
+    fn zero_page_x_read(&mut self) -> u8 {
+        let x = self.registers.x;
+        let address = self.fetch8().wrapping_add(x);
+        self.read(address as u16)
+    }
+
+    fn zero_page_x_addr(&mut self) -> u16 {
+        let x = self.registers.x;
+        let address = self.fetch8().wrapping_add(x);
+        address as u16
+    }
+
+    fn zero_page_y_read(&mut self) -> u8 {
+        let y = self.registers.y;
+        let address = self.fetch8().wrapping_add(y);
+        self.read(address as u16)
+    }
+
+    fn zero_page_y_addr(&mut self) -> u16 {
+        let y = self.registers.y;
+        let address = self.fetch8().wrapping_add(y);
+        address as u16
+    }
+
+    fn absolute_read(&mut self) -> u8 {
+        let address = self.fetch16();
+        self.read(address)
+    }
+
+    fn absolute_addr(&mut self) -> u16 {
+        self.fetch16()
+    }
+
+    fn absolute_x_read(&mut self) -> u8 {
+        let x = self.registers.x;
+        let address = self.fetch16().wrapping_add(x as u16);
+        self.read(address)
+    }
+
+    fn absolute_x_addr(&mut self) -> u16 {
+        let x = self.registers.x;
+        let address = self.fetch16().wrapping_add(x as u16);
+        address
+    }
+
+    fn absolute_y_read(&mut self) -> u8 {
+        let y = self.registers.y;
+        let address = self.fetch16().wrapping_add(y as u16);
+        self.read(address)
+    }
+
+    fn absolute_y_addr(&mut self) -> u16 {
+        let y = self.registers.y;
+        let address = self.fetch16().wrapping_add(y as u16);
+        address
+    }
+
+    fn indirect_x_read(&mut self) -> u8 {
+        let x = self.registers.x;
+        let pointer = self.fetch8().wrapping_add(x);
+        let low = self.read(pointer as u16);
+        let high = self.read(pointer.wrapping_add(1) as u16);
+        let address = u16::from_le_bytes([low, high]);
+        self.read(address)
+    }
+
+    fn indirect_x_addr(&mut self) -> u16 {
+        let x = self.registers.x;
+        let pointer = self.fetch8().wrapping_add(x);
+        let low = self.read(pointer as u16);
+        let high = self.read(pointer.wrapping_add(1) as u16);
+        u16::from_le_bytes([low, high])
+    }
+
+    fn indirect_y_read(&mut self) -> u8 {
+        let y = self.registers.y;
+        let pointer = self.fetch8();
+        let low = self.read(pointer as u16);
+        let high = self.read(pointer.wrapping_add(1) as u16);
+        let address = u16::from_le_bytes([low, high]).wrapping_add(y as u16);
+        self.read(address)
+    }
+
+    fn indirect_y_addr(&mut self) -> u16 {
+        let y = self.registers.y;
+        let pointer = self.fetch8();
+        let low = self.read(pointer as u16);
+        let high = self.read(pointer.wrapping_add(1) as u16);
+        let address = u16::from_le_bytes([low, high]).wrapping_add(y as u16);
+        address
+    }
+
+    // Set/unset flags
+
+    fn set_negative(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0x80 != 0x00);
+    }
+
+    fn set_overflow(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::OVERFLOW, value & 0x40 != 0x00);
+    }
+
+    fn set_break(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::BREAK, value & 0x10 != 0x00);
+    }
+
+    fn set_decimal(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::DECIMAL, value & 0x08 != 0x00);
+    }
+
+    fn set_interrupt(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::INTERRUPT, value & 0x04 != 0x00);
+    }
+
+    fn set_zero(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::ZERO, value & 0x02 != 0x00);
+    }
+
+    fn set_carry(&mut self, value: u8) {
+        self.registers
+            .status
+            .set(Status::CARRY, value & 0x01 != 0x00);
+    }
+
+    // Opcode implementations
+
+    // Load/store
 
     // Load accumulator
-    fn lda(&mut self, mode: AddressingMode) {
-        let value = match mode {
-            // Immediate
-            AddressingMode::Immediate => self.fetch8(),
 
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16;
-                self.read(address)
-            }
-
-            // Zero page X
-            AddressingMode::ZeroPageX => {
-                let x = self.registers.x;
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16 + x as u16;
-                self.read(address)
-            }
-
-            // Absolute
-            AddressingMode::Absolute => {
-                let address = self.fetch16();
-                self.read(address)
-            }
-
-            // Absolute X
-            AddressingMode::AbsoluteX => {
-                let x = self.registers.x;
-                let address = self.fetch16() + x as u16;
-                self.read(address)
-            }
-
-            // Absolute Y
-            AddressingMode::AbsoluteY => {
-                let y = self.registers.y;
-                let address = self.fetch16() + y as u16;
-                self.read(address)
-            }
-
-            // Indirect X
-            AddressingMode::IndirectX => {
-                // Read the offset
-                let x = self.registers.x;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                let address = u16::from_le_bytes([low, high]);
-                self.read(address)
-            }
-
-            // Indirect Y
-            AddressingMode::IndirectY => {
-                // Read the offset
-                let y = self.registers.y;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                let address = u16::from_le_bytes([low, high]) + y as u16;
-                self.read(address)
-            }
-
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
-
-        // Write accumulator
+    // Load accumulator immediate
+    fn lda_immediate(&mut self) {
+        let value = self.immediate();
         self.registers.acc = value;
 
-        // Write zero flag
-        if value == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if value & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
-    // Load X
-    fn ldx(&mut self, mode: AddressingMode) {
-        let value = match mode {
-            // Immediate
-            AddressingMode::Immediate => self.fetch8(),
+    // Load accumulator zero page
+    fn lda_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.acc = value;
 
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16;
-                self.read(address)
-            }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-            // Zero page y
-            AddressingMode::ZeroPageY => {
-                let y = self.registers.y;
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16 + y as u16;
-                self.read(address)
-            }
+    // Load accumulator zero page, X
+    fn lda_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.registers.acc = value;
 
-            // Absolute
-            AddressingMode::Absolute => {
-                let address = self.fetch16();
-                self.read(address)
-            }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-            // Absolute Y
-            AddressingMode::AbsoluteY => {
-                let y = self.registers.y;
-                let address = self.fetch16() + y as u16;
-                self.read(address)
-            }
+    // Load accumulator absolute
+    fn lda_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.acc = value;
 
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-        // Write X
+    // Load accumulator absolute, X
+    fn lda_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.registers.acc = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load accumulator absolute, Y
+    fn lda_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.registers.acc = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load accumulator indirect, X
+    fn lda_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.registers.acc = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load accumulator indirect, Y
+    fn lda_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.registers.acc = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load X register
+
+    // Load X register immediate
+    fn ldx_immediate(&mut self) {
+        let value = self.immediate();
         self.registers.x = value;
 
-        // Write zero flag
-        if value == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if value & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
-    // Load Y
-    fn ldy(&mut self, mode: AddressingMode) {
-        let value = match mode {
-            // Immediate
-            AddressingMode::Immediate => self.fetch8(),
+    // Load X register zero page
+    fn ldx_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.x = value;
 
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16;
-                self.read(address)
-            }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-            // Zero page X
-            AddressingMode::ZeroPageX => {
-                let x = self.registers.x;
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16 + x as u16;
-                self.read(address)
-            }
+    // Load X register zero page, Y
+    fn ldx_zero_page_y(&mut self) {
+        let value = self.zero_page_y_read();
+        self.registers.x = value;
 
-            // Absolute
-            AddressingMode::Absolute => {
-                let address = self.fetch16();
-                self.read(address)
-            }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-            // Absolute X
-            AddressingMode::AbsoluteX => {
-                let x = self.registers.x;
-                let address = self.fetch16() + x as u16;
-                self.read(address)
-            }
+    // Load X register absolute
+    fn ldx_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.x = value;
 
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-        // Write Y
+    // Load X register absolute, Y
+    fn ldx_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.registers.x = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load Y register
+
+    // Load Y register immediate
+    fn ldy_immediate(&mut self) {
+        let value = self.immediate();
         self.registers.y = value;
 
-        // Write zero flag
-        if value == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
 
-        // Write negative flag
-        if value & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+    // Load Y register zero page
+    fn ldy_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.y = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load Y register zero page, X
+    fn ldy_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.registers.y = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load Y register absolute
+    fn ldy_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.y = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Load Y register absolute, X
+    fn ldy_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.registers.y = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
     // Store accumulator
-    fn sta(&mut self, mode: AddressingMode) {
-        let address = match mode {
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                0x0000 + offset as u16
-            }
 
-            // Zero page X
-            AddressingMode::ZeroPageX => {
-                let x = self.registers.x;
-                let offset = self.fetch8();
-                0x0000 + offset as u16 + x as u16
-            }
-
-            // Absolute
-            AddressingMode::Absolute => self.fetch16(),
-
-            // Absolute X
-            AddressingMode::AbsoluteX => {
-                let x = self.registers.x;
-                self.fetch16() + x as u16
-            }
-
-            // Absolute Y
-            AddressingMode::AbsoluteY => {
-                let y = self.registers.y;
-                self.fetch16() + y as u16
-            }
-
-            // Indirect X
-            AddressingMode::IndirectX => {
-                // Read the offset
-                let x = self.registers.x;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                u16::from_le_bytes([low, high])
-            }
-
-            // Indirect Y
-            AddressingMode::IndirectY => {
-                // Read the offset
-                let y = self.registers.y;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                u16::from_le_bytes([low, high]) + y as u16
-            }
-
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
-
-        // Write value
+    // Store accumulator zero page
+    fn sta_zero_page(&mut self) {
+        let address = self.zero_page_addr();
         self.write(address, self.registers.acc);
     }
 
-    // Store X
-    fn stx(&mut self, mode: AddressingMode) {
-        let address = match mode {
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                0x0000 + offset as u16
-            }
+    // Store accumulator zero page, X
+    fn sta_zero_page_x(&mut self) {
+        let address = self.zero_page_x_addr();
+        self.write(address, self.registers.acc);
+    }
 
-            // Zero page Y
-            AddressingMode::ZeroPageY => {
-                let y = self.registers.y;
-                let offset = self.fetch8();
-                0x0000 + offset as u16 + y as u16
-            }
+    // Store accumulator absolute
+    fn sta_absolute(&mut self) {
+        let address = self.absolute_addr();
+        self.write(address, self.registers.acc);
+    }
 
-            // Absolute
-            AddressingMode::Absolute => self.fetch16(),
+    // Store accumulator absolute, X
+    fn sta_absolute_x(&mut self) {
+        let address = self.absolute_x_addr();
+        self.write(address, self.registers.acc);
+    }
 
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
+    // Store accumulator absolute, Y
+    fn sta_absolute_y(&mut self) {
+        let address = self.absolute_y_addr();
+        self.write(address, self.registers.acc);
+    }
 
-        // Write value
+    // Store accumulator indirect, X
+    fn sta_indirect_x(&mut self) {
+        let address = self.indirect_x_addr();
+        self.write(address, self.registers.acc);
+    }
+
+    // Store accumulator indirect, Y
+    fn sta_indirect_y(&mut self) {
+        let address = self.indirect_y_addr();
+        self.write(address, self.registers.acc);
+    }
+
+    // Store X register
+
+    // Store X register zero page
+    fn stx_zero_page(&mut self) {
+        let address = self.zero_page_addr();
         self.write(address, self.registers.x);
     }
 
-    // Store Y
-    fn sty(&mut self, mode: AddressingMode) {
-        let address = match mode {
-            // Zero page
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                0x0000 + offset as u16
-            }
+    // Store X register zero page, Y
+    fn stx_zero_page_y(&mut self) {
+        let address = self.zero_page_y_addr();
+        self.write(address, self.registers.x);
+    }
 
-            // Zero page X
-            AddressingMode::ZeroPageX => {
-                let x = self.registers.x;
-                let offset = self.fetch8();
-                0x0000 + offset as u16 + x as u16
-            }
+    // Store X register absolute
+    fn stx_absolute(&mut self) {
+        let address = self.absolute_addr();
+        self.write(address, self.registers.x);
+    }
 
-            // Absolute
-            AddressingMode::Absolute => self.fetch16(),
+    // Store Y register
 
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
-
-        // Write value
+    // Store Y register zero page
+    fn sty_zero_page(&mut self) {
+        let address = self.zero_page_addr();
         self.write(address, self.registers.y);
     }
 
-    // Register transfers opcodes
+    // Store Y register zero page, X
+    fn sty_zero_page_x(&mut self) {
+        let address = self.zero_page_x_addr();
+        self.write(address, self.registers.y);
+    }
 
-    // Transfer accumulator to X
+    // Store Y register absolute
+    fn sty_absolute(&mut self) {
+        let address = self.absolute_addr();
+        self.write(address, self.registers.y);
+    }
+
+    // Transfer
+
+    // Transfer accumulator to X register
     fn tax(&mut self) {
-        // Write X
-        self.registers.x = self.registers.acc;
+        let value = self.registers.acc;
+        self.registers.x = value;
 
-        // Write zero flag
-        if self.registers.x == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if self.registers.x & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
-    // Transfer accumulator to Y
+    // Transfer accumulator to Y register
     fn tay(&mut self) {
-        // Write Y
-        self.registers.y = self.registers.acc;
+        let value = self.registers.acc;
+        self.registers.y = value;
 
-        // Write zero flag
-        if self.registers.y == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if self.registers.y & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
-    // Transfer X to accumulator
+    // Transfer X register to accumulator
     fn txa(&mut self) {
-        // Write accumulator
-        self.registers.acc = self.registers.x;
+        let value = self.registers.x;
+        self.registers.acc = value;
 
-        // Write zero flag
-        if self.registers.acc == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if self.registers.acc & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
     }
 
-    // Transfer Y to accumulator
+    // Transfer Y register to accumulator
     fn tya(&mut self) {
-        // Write accumulator
-        self.registers.acc = self.registers.y;
+        let value = self.registers.y;
+        self.registers.acc = value;
 
-        // Write zero flag
-        if self.registers.acc == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+}
 
-        // Write negative flag
-        if self.registers.acc & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+#[cfg(test)]
+// Functions for unit testing
+impl Processor {
+    // Get a mutable reference to the registers
+    pub fn set_register(&mut self) -> &mut Registers {
+        &mut self.registers
     }
 
-    // Stack opcodes
-
-    // Transfer stack pointer to X
-    fn tsx(&mut self) {
-        // Write X
-        self.registers.x = self.registers.sp;
-
-        // Write zero falg
-        if self.registers.x == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if self.registers.x & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
+    // Get an immutable reference to the registers
+    pub fn get_registers(&self) -> &Registers {
+        &self.registers
     }
 
-    // Transfer X to stack pointer
-    fn txs(&mut self) {
-        // Write Sp
-        self.registers.sp = self.registers.x;
+    // Write a byte to the given address
+    pub fn set_mem(&mut self, address: u16, byte: u8) {
+        self.device_mapper.write(address, byte);
     }
 
-    // Push accumulator on stack
-    fn pha(&mut self) {
-        // Read accumulator and sp
-        let acc = self.registers.acc;
-        let sp = self.registers.sp;
-
-        // Push acc
-        self.write(0x0100 + sp as u16, acc);
-
-        // Decrement the sp
-        let _sp = self.registers.sp.wrapping_sub(1);
-    }
-
-    // Push processor status on stack
-    fn php(&mut self) {
-        // Read status and sp
-        let status = self.registers.status.bits();
-        let sp = self.registers.sp;
-
-        // Push status
-        self.write(0x0100 + sp as u16, status);
-
-        // Decrement the sp
-        let _sp = self.registers.sp.wrapping_sub(1);
-    }
-
-    // Pull accumulator from stack
-    fn pla(&mut self) {
-        // Read sp
-        let sp = self.registers.sp;
-
-        // Pull accumulator
-        let acc = self.read(0x0100 + sp as u16);
-
-        // Write accumulator
-        self.registers.acc = acc;
-
-        // Increment sp
-        let _sp = self.registers.sp.wrapping_add(1);
-
-        // Write zero falg
-        if self.registers.x == 0x00 {
-            self.write_flag(ZERO, true)
-        } else {
-            self.write_flag(ZERO, false)
-        }
-
-        // Write negative flag
-        if self.registers.x & 0x80 == 0x80 {
-            self.write_flag(NEGATIVE, true)
-        } else {
-            self.write_flag(NEGATIVE, false)
-        }
-    }
-
-    // Pull processor status from stack
-    fn plp(&mut self) {
-        // Read sp
-        let sp = self.registers.sp;
-
-        // Pull status
-        let raw_status = self.read(0x0100 + sp as u16);
-
-        // Write status
-        self.registers.status = match Status::from_bits(raw_status) {
-            Some(status) => status,
-            None => unreachable!("Unreachable status"),
-        };
-    }
-
-    fn and(&mut self, mode: AddressingMode) {
-        let value = match mode {
-            AddressingMode::Immediate => self.fetch8(),
-            AddressingMode::ZeroPage => {
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16;
-                self.read(address)
-            }
-            AddressingMode::ZeroPageX => {
-                let x = self.registers.x;
-                let offset = self.fetch8();
-                let address = 0x0000 + offset as u16 + x as u16;
-                self.read(address)
-            }
-            AddressingMode::Absolute => {
-                let address = self.fetch16();
-                self.read(address)
-            }
-            AddressingMode::AbsoluteX => {
-                let x = self.registers.x;
-                let address = self.fetch16() + x as u16;
-                self.read(address)
-            }
-            AddressingMode::AbsoluteY => {
-                let y = self.registers.y;
-                let address = self.fetch16() + y as u16;
-                self.read(address)
-            }
-            AddressingMode::IndirectX => {
-                // Read the offset
-                let x = self.registers.x;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16 + x as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                let address = u16::from_le_bytes([low, high]);
-                self.read(address)
-            }
-            AddressingMode::IndirectY => {
-                let y = self.registers.y;
-                let offset = self.fetch8();
-
-                // Read the pointer address
-                let pointer_address = 0x0000 + offset as u16;
-                let low = self.read(pointer_address);
-                let high = self.read(pointer_address + 1);
-
-                // Read the value
-                let address = u16::from_le_bytes([low, high]) + y as u16;
-                self.read(address)
-            }
-
-            // Unknow addressing mode
-            _ => {
-                unreachable!("Unreachable addressing mode")
-            }
-        };
+    // Read a byte from the given address
+    pub fn get_mem(&mut self, address: u16) -> u8 {
+        self.device_mapper.read(address)
     }
 }

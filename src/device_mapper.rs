@@ -1,6 +1,5 @@
 // Imports
 use crate::device::{Device, Ram};
-use std::fmt;
 
 // Structs
 
@@ -77,22 +76,5 @@ impl DeviceMapper {
         // Write the data to the device in the region
         let offset = address - region.start;
         region.device.write(offset, data);
-    }
-}
-
-// Implement the Debug trait for the DeviceMapper struct
-impl fmt::Debug for DeviceMapper {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "DeviceMapper {{")?;
-        for region in &self.regions {
-            write!(
-                f,
-                " {:04X}-{:04X}: {},",
-                region.start,
-                region.end,
-                region.device.read_type()
-            )?;
-        }
-        write!(f, "}}")
     }
 }
