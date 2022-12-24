@@ -97,4 +97,24 @@ mod logical {
     pub const AND_ABSY: u8 = 0x39;
     pub const AND_INDX: u8 = 0x21;
     pub const AND_INDY: u8 = 0x31;
+
+    // Logical EOR
+    pub const EOR_IM: u8 = 0x49;
+    pub const EOR_ZP: u8 = 0x45;
+    pub const EOR_ZPX: u8 = 0x55;
+    pub const EOR_ABS: u8 = 0x4D;
+    pub const EOR_ABSX: u8 = 0x5D;
+    pub const EOR_ABSY: u8 = 0x59;
+    pub const EOR_INDX: u8 = 0x41;
+    pub const EOR_INDY: u8 = 0x51;
+
+    // Logical ORA
+    pub const ORA_IM: u8 = 0x09;
+    pub const ORA_ZP: u8 = 0x05;
+    pub const ORA_ZPX: u8 = 0x15;
+    pub const ORA_ABS: u8 = 0x0D;
+    pub const ORA_ABSX: u8 = 0x1D;
+    pub const ORA_ABSY: u8 = 0x19;
+    pub const ORA_INDX: u8 = 0x01;
+    pub const ORA_INDY: u8 = 0x11;
 }

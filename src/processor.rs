@@ -203,6 +203,26 @@ impl Processor {
             AND_INDX => self.and_indirect_x(),
             AND_INDY => self.and_indirect_y(),
 
+            // Logical EOR
+            EOR_IM => self.eor_immediate(),
+            EOR_ZP => self.eor_zero_page(),
+            EOR_ZPX => self.eor_zero_page_x(),
+            EOR_ABS => self.eor_absolute(),
+            EOR_ABSX => self.eor_absolute_x(),
+            EOR_ABSY => self.eor_absolute_y(),
+            EOR_INDX => self.eor_indirect_x(),
+            EOR_INDY => self.eor_indirect_y(),
+
+            // Logical ORA
+            ORA_IM => self.ora_immediate(),
+            ORA_ZP => self.ora_zero_page(),
+            ORA_ZPX => self.ora_zero_page_x(),
+            ORA_ABS => self.ora_absolute(),
+            ORA_ABSX => self.ora_absolute_x(),
+            ORA_ABSY => self.ora_absolute_y(),
+            ORA_INDX => self.ora_indirect_x(),
+            ORA_INDY => self.ora_indirect_y(),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -770,6 +790,154 @@ impl Processor {
     fn and_indirect_y(&mut self) {
         let value = self.indirect_y_read();
         self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR
+
+    // Logical EOR immediate
+    fn eor_immediate(&mut self) {
+        let value = self.immediate();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR zero page
+    fn eor_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR zero page, X
+    fn eor_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR absolute
+    fn eor_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR absolute, X
+    fn eor_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR absolute, Y
+    fn eor_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR (indirect, X)
+    fn eor_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical EOR (indirect), Y
+    fn eor_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.registers.acc ^= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA
+
+    // Logical ORA immediate
+    fn ora_immediate(&mut self) {
+        let value = self.immediate();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA zero page
+    fn ora_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA zero page, X
+    fn ora_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA absolute
+    fn ora_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA absolute, X
+    fn ora_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA absolute, Y
+    fn ora_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA (indirect, X)
+    fn ora_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.registers.acc |= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical ORA (indirect), Y
+    fn ora_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.registers.acc |= value;
 
         self.set_negative(self.registers.acc);
         self.set_zero(self.registers.acc);

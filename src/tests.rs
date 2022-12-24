@@ -894,8 +894,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
         }
 
@@ -952,8 +952,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -972,8 +972,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -993,8 +993,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -1013,8 +1013,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -1034,8 +1034,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -1055,8 +1055,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -1078,8 +1078,8 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
             }
 
             #[test]
@@ -1101,8 +1101,360 @@ mod processor {
                 processor.step();
 
                 // Check state of processor
-                let reg = processor.get_registers();
-                assert_eq!(reg.acc, 0x42);
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x42);
+            }
+        }
+
+        pub use eor::*;
+        mod eor {
+            use crate::opcodes::{
+                EOR_ABS, EOR_ABSX, EOR_ABSY, EOR_IM, EOR_INDX, EOR_INDY, EOR_ZP, EOR_ZPX,
+            };
+            use crate::processor::Processor;
+
+            #[test]
+            // EOR #42 (Immediate)
+            fn test_eor_im() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_IM, 0x42, // EOR 0x42 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $42 (Zero Page)
+            fn test_eor_zp() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ZP, 0x42, // EOR 0x0042 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x0042, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $42,X (Zero Page, X)
+            fn test_eor_zpx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ZPX, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242 (Absolute)
+            fn test_eor_abs() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABS, 0x42, 0x42, // EOR 0x4242 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242,X (Absolute, X)
+            fn test_eor_absx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABSX, 0x42, 0x42, // EOR 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242,Y (Absolute, Y)
+            fn test_eor_absy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABSY, 0x42, 0x42, // EOR 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR ($42,X) (Indirect, X)
+            fn test_eor_indx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_INDX, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x0044, 0x42);
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR ($42),Y (Indirect, Y)
+            fn test_eor_indy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_INDY, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x0042, 0x42);
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+        }
+
+        pub use ora::*;
+        mod ora {
+            use crate::opcodes::{
+                EOR_ABS, EOR_ABSX, EOR_ABSY, EOR_IM, EOR_INDX, EOR_INDY, EOR_ZP, EOR_ZPX,
+            };
+            use crate::processor::Processor;
+
+            #[test]
+            // EOR #42 (Immediate)
+            fn test_eor_im() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_IM, 0x42, // EOR 0x42 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $42 (Zero Page)
+            fn test_eor_zp() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ZP, 0x42, // EOR 0x0042 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x0042, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $42,X (Zero Page, X)
+            fn test_eor_zpx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ZPX, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242 (Absolute)
+            fn test_eor_abs() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABS, 0x42, 0x42, // EOR 0x4242 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242,X (Absolute, X)
+            fn test_eor_absx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABSX, 0x42, 0x42, // EOR 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR $4242,Y (Absolute, Y)
+            fn test_eor_absy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_ABSY, 0x42, 0x42, // EOR 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR ($42,X) (Indirect, X)
+            fn test_eor_indx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_INDX, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x0044, 0x42);
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
+            }
+
+            #[test]
+            // EOR ($42),Y (Indirect, Y)
+            fn test_eor_indy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    EOR_INDY, 0x42, // EOR 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x0042, 0x42);
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let acc = processor.get_registers().acc;
+                assert_eq!(acc, 0x00);
             }
         }
     }
