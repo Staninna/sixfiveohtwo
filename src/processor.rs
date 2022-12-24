@@ -191,6 +191,18 @@ impl Processor {
             // Pull processor status from stack
             PLP => self.plp(),
 
+            // Logical
+
+            // Logical AND
+            AND_IM => self.and_immediate(),
+            AND_ZP => self.and_zero_page(),
+            AND_ZPX => self.and_zero_page_x(),
+            AND_ABS => self.and_absolute(),
+            AND_ABSX => self.and_absolute_x(),
+            AND_ABSY => self.and_absolute_y(),
+            AND_INDX => self.and_indirect_x(),
+            AND_INDY => self.and_indirect_y(),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -685,6 +697,82 @@ impl Processor {
     fn plp(&mut self) {
         let value = self.pull();
         self.registers.status = Status::from_bits_truncate(value);
+    }
+
+    // Logical
+
+    // Logical AND
+
+    // Logical AND immediate
+    fn and_immediate(&mut self) {
+        let value = self.immediate();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND zero page
+    fn and_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND zero page, X
+    fn and_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND absolute
+    fn and_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND absolute, X
+    fn and_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND absolute, Y
+    fn and_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND (indirect, X)
+    fn and_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
+    }
+
+    // Logical AND (indirect), Y
+    fn and_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.registers.acc &= value;
+
+        self.set_negative(self.registers.acc);
+        self.set_zero(self.registers.acc);
     }
 }
 

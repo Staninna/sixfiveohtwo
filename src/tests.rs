@@ -691,7 +691,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // TAY (Transfer Accumulator to Y)
+            // TAY
             fn test_tay() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -718,7 +718,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // TXA (Transfer X to Accumulator)
+            // TXA
             fn test_txa() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -745,7 +745,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // TYA (Transfer Y to Accumulator)
+            // TYA
             fn test_tya() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -772,7 +772,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // TSX (Transfer Stack Pointer to X)
+            // TSX
             fn test_tsx() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -799,7 +799,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // TXS (Transfer X to Stack Pointer)
+            // TXS
             fn test_txs() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -830,7 +830,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // PHA (Push Accumulator to Stack)
+            // PHA
             fn test_pha() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -856,7 +856,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // PHP (Push Processor Status to Stack)
+            // PHP
             fn test_php() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -879,7 +879,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // PLA (Pull Accumulator from Stack)
+            // PLA
             fn test_pla() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -906,7 +906,7 @@ mod processor {
             use crate::processor::Processor;
 
             #[test]
-            // PLP (Pull Processor Status from Stack)
+            // PLP
             fn test_plp() {
                 // Create processor with instruction
                 let mut processor = Processor::new(vec![
@@ -923,6 +923,186 @@ mod processor {
                 // Check state of processor
                 let status = processor.get_registers().status.bits();
                 assert_eq!(status, 0b00100000);
+            }
+        }
+    }
+
+    // Logical
+    pub use logical::*;
+    mod logical {
+        pub use and::*;
+        mod and {
+            use crate::opcodes::{
+                AND_ABS, AND_ABSX, AND_ABSY, AND_IM, AND_INDX, AND_INDY, AND_ZP, AND_ZPX,
+            };
+            use crate::processor::Processor;
+
+            #[test]
+            // AND #42 (Immediate)
+            fn test_and_im() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_IM, 0x42, // AND 0x42 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND $42 (Zero Page)
+            fn test_and_zp() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_ZP, 0x42, // AND 0x0042 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x0042, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND $42,X (Zero Page, X)
+            fn test_and_zpx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_ZPX, 0x42, // AND 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND $4242 (Absolute)
+            fn test_and_abs() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_ABS, 0x42, 0x42, // AND 0x4242 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND $4242,X (Absolute, X)
+            fn test_and_absx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_ABSX, 0x42, 0x42, // AND 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND $4242,Y (Absolute, Y)
+            fn test_and_absy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_ABSY, 0x42, 0x42, // AND 0x4243 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND ($42,X) (Indirect, X)
+            fn test_and_indx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_INDX, 0x42, // AND 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().x = 0x01;
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x0044, 0x42);
+                processor.set_mem(0x4242, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+
+            #[test]
+            // AND ($42),Y (Indirect, Y)
+            fn test_and_indy() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    AND_INDY, 0x42, // AND 0x0043 with accumulator
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+                processor.set_register().y = 0x01;
+                processor.set_mem(0x0042, 0x42);
+                processor.set_mem(0x0043, 0x42);
+                processor.set_mem(0x4243, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
             }
         }
     }
