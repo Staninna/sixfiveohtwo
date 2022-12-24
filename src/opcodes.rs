@@ -61,17 +61,17 @@ mod transfers {
 
     // Transfer Y to accumulator
     pub const TYA: u8 = 0x98;
-}
 
-// Stack opcode
-pub use stack::*;
-mod stack {
     // Transfer stack pointer to X
     pub const TSX: u8 = 0xBA;
 
     // Transfer X to stack pointer
     pub const TXS: u8 = 0x9A;
+}
 
+// Stack opcode
+pub use stack::*;
+mod stack {
     // Push accumulator on stack
     pub const PHA: u8 = 0x48;
 

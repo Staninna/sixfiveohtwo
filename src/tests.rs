@@ -587,6 +587,71 @@ mod processor {
                 assert_eq!(mem, 0x42);
             }
         }
+
+        // Store Y
+        pub use store_y::*;
+        mod store_y {
+            use crate::opcodes::{STY_ABS, STY_ZP, STY_ZPX};
+            use crate::processor::Processor;
+
+            #[test]
+            // STY $02 (Zero Page)
+            fn test_sty_zp() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    STY_ZP, 0x02, // Store Y with 0x42
+                ]);
+
+                // Set state of processor
+                processor.set_register().y = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let mem = processor.get_mem(0x0002);
+                assert_eq!(mem, 0x42);
+            }
+
+            #[test]
+            // STY $02,X (Zero Page, X)
+            fn test_sty_zpx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    STY_ZPX, 0x02, // Store Y with 0x42
+                ]);
+
+                // Set state of processor
+                processor.set_register().y = 0x42;
+                processor.set_register().x = 0x01;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let mem = processor.get_mem(0x0003);
+                assert_eq!(mem, 0x42);
+            }
+
+            #[test]
+            // STY $4200 (Absolute)
+            fn test_sty_abs() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    STY_ABS, 0x42, 0x00, // Store Y with 0x42
+                ]);
+
+                // Set state of processor
+                processor.set_register().y = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let mem = processor.get_mem(0x4200);
+                assert_eq!(mem, 0x42);
+            }
+        }
     }
 
     // Transfer
@@ -697,6 +762,167 @@ mod processor {
                 let reg = processor.get_registers();
                 assert_eq!(reg.acc, 0x42);
                 assert_eq!(reg.y, 0x42);
+            }
+        }
+
+        // Transfer Stack Pointer to X Register
+        pub use transfer_sp_to_x::*;
+        mod transfer_sp_to_x {
+            use crate::opcodes::TSX;
+            use crate::processor::Processor;
+
+            #[test]
+            // TSX (Transfer Stack Pointer to X)
+            fn test_tsx() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    TSX, // Transfer Stack Pointer to X
+                ]);
+
+                // Set state of processor
+                processor.set_register().sp = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.sp, 0x42);
+                assert_eq!(reg.x, 0x42);
+            }
+        }
+
+        // Transfer X to Stack Pointer
+        pub use transfer_x_to_sp::*;
+        mod transfer_x_to_sp {
+            use crate::opcodes::TXS;
+            use crate::processor::Processor;
+
+            #[test]
+            // TXS (Transfer X to Stack Pointer)
+            fn test_txs() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    TXS, // Transfer X to Stack Pointer
+                ]);
+
+                // Set state of processor
+                processor.set_register().x = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.sp, 0x42);
+                assert_eq!(reg.x, 0x42);
+            }
+        }
+    }
+
+    // Stack
+    pub use stack::*;
+    mod stack {
+        // Push Accumulator to Stack
+        pub use push_acc_to_stack::*;
+        mod push_acc_to_stack {
+            use crate::opcodes::PHA;
+            use crate::processor::Processor;
+
+            #[test]
+            // PHA (Push Accumulator to Stack)
+            fn test_pha() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    PHA, // Push Accumulator to Stack
+                ]);
+
+                // Set state of processor
+                processor.set_register().acc = 0x42;
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let mem = processor.get_mem(0x01FF);
+                assert_eq!(mem, 0x42);
+            }
+        }
+
+        // Push Processor Status to Stack
+        pub use push_status_to_stack::*;
+        mod push_status_to_stack {
+            use crate::opcodes::PHP;
+            use crate::processor::Processor;
+
+            #[test]
+            // PHP (Push Processor Status to Stack)
+            fn test_php() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    PHP, // Push Processor Status to Stack
+                ]);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let mem = processor.get_mem(0x01FF);
+                assert_eq!(mem, 0b00100000);
+            }
+        }
+
+        // Pull Accumulator from Stack
+        pub use pull_acc_from_stack::*;
+        mod pull_acc_from_stack {
+            use crate::opcodes::PLA;
+            use crate::processor::Processor;
+
+            #[test]
+            // PLA (Pull Accumulator from Stack)
+            fn test_pla() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    PLA, // Pull Accumulator from Stack
+                ]);
+
+                // Set state of processor
+                processor.set_register().sp = 0xFF;
+                processor.set_mem(0x01FF, 0x42);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let reg = processor.get_registers();
+                assert_eq!(reg.acc, 0x42);
+            }
+        }
+
+        // Pull Processor Status from Stack
+        pub use pull_status_from_stack::*;
+        mod pull_status_from_stack {
+            use crate::opcodes::PLP;
+            use crate::processor::Processor;
+
+            #[test]
+            // PLP (Pull Processor Status from Stack)
+            fn test_plp() {
+                // Create processor with instruction
+                let mut processor = Processor::new(vec![
+                    PLP, // Pull Processor Status from Stack
+                ]);
+
+                // Set state of processor
+                processor.set_register().sp = 0xFF;
+                processor.set_mem(0x01FF, 0b00100000);
+
+                // Execute instruction
+                processor.step();
+
+                // Check state of processor
+                let status = processor.get_registers().status.bits();
+                assert_eq!(status, 0b00100000);
             }
         }
     }

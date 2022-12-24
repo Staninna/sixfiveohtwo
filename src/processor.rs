@@ -87,6 +87,28 @@ impl Processor {
         u16::from_le_bytes([low, high])
     }
 
+    // Push a byte on the stack
+    fn push(&mut self, byte: u8) {
+        // Decrement the stack pointer
+        self.registers.sp = self.registers.sp.wrapping_sub(1);
+
+        // Write the byte to the stack
+        let address = 0x0100 + self.registers.sp as u16;
+        self.write(address, byte);
+    }
+
+    // Pull a byte from the stack
+    fn pull(&mut self) -> u8 {
+        // Read the byte from the stack
+        let address = 0x0100 + self.registers.sp as u16;
+        let byte = self.read(address);
+
+        // Increment the stack pointer
+        self.registers.sp = self.registers.sp.wrapping_add(1);
+
+        byte
+    }
+
     // Execute the given opcode
     fn execute(&mut self, opcode: u8) {
         match opcode {
@@ -148,6 +170,26 @@ impl Processor {
 
             // Transfer Y register to accumulator
             TYA => self.tya(),
+
+            // Stack
+
+            // Transfer stack pointer to X register
+            TSX => self.tsx(),
+
+            // Transfer X register to stack pointer
+            TXS => self.txs(),
+
+            // Push accumulator on stack
+            PHA => self.pha(),
+
+            // Push processor status on stack
+            PHP => self.php(),
+
+            // Pull accumulator from stack
+            PLA => self.pla(),
+
+            // Pull processor status from stack
+            PLP => self.plp(),
 
             // Unknow opcode
             _ => {
@@ -599,6 +641,50 @@ impl Processor {
 
         self.set_negative(value);
         self.set_zero(value);
+    }
+
+    // Transfer stack pointer to X register
+    fn tsx(&mut self) {
+        let value = self.registers.sp;
+        self.registers.x = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Transfer X register to stack pointer
+    fn txs(&mut self) {
+        let value = self.registers.x;
+        self.registers.sp = value;
+    }
+
+    // Stack
+
+    // Push accumulator
+    fn pha(&mut self) {
+        let value = self.registers.acc;
+        self.push(value);
+    }
+
+    // Push processor status
+    fn php(&mut self) {
+        let value = self.registers.status.bits();
+        self.push(value);
+    }
+
+    // Pull accumulator
+    fn pla(&mut self) {
+        let value = self.pull();
+        self.registers.acc = value;
+
+        self.set_negative(value);
+        self.set_zero(value);
+    }
+
+    // Pull processor status
+    fn plp(&mut self) {
+        let value = self.pull();
+        self.registers.status = Status::from_bits_truncate(value);
     }
 }
 
