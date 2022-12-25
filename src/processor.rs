@@ -18,7 +18,7 @@ impl Processor {
         let mut device_mapper = DeviceMapper::new();
 
         // Load the program
-        let offset = 0x0000;
+        let offset = 0x0800;
         registers.pc = offset;
         for (i, byte) in program.iter().enumerate() {
             device_mapper.write((i + offset as usize) as u16, *byte);
@@ -223,6 +223,16 @@ impl Processor {
             ORA_INDX => self.ora_indirect_x(),
             ORA_INDY => self.ora_indirect_y(),
 
+            // Arithmetic
+            ADC_IM => self.adc_immediate(),
+            ADC_ZP => self.adc_zero_page(),
+            ADC_ZPX => self.adc_zero_page_x(),
+            ADC_ABS => self.adc_absolute(),
+            ADC_ABSX => self.adc_absolute_x(),
+            ADC_ABSY => self.adc_absolute_y(),
+            ADC_INDX => self.adc_indirect_x(),
+            ADC_INDY => self.adc_indirect_y(),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -342,43 +352,26 @@ impl Processor {
     fn set_negative(&mut self, value: u8) {
         self.registers
             .status
-            .set(Status::NEGATIVE, value & 0x80 != 0x00);
+            .set(Status::NEGATIVE, value & 0x80 == 0x80);
     }
 
-    fn set_overflow(&mut self, value: u8) {
+    fn set_overflow(&mut self, a: u8, b: u8, result: u8) {
+        let sign_a = a & 0x80 == 0x80;
+        let sign_b = b & 0x80 == 0x80;
+        let sign_result = result & 0x80 == 0x80;
         self.registers
             .status
-            .set(Status::OVERFLOW, value & 0x40 != 0x00);
-    }
-
-    fn set_break(&mut self, value: u8) {
-        self.registers
-            .status
-            .set(Status::BREAK, value & 0x10 != 0x00);
-    }
-
-    fn set_decimal(&mut self, value: u8) {
-        self.registers
-            .status
-            .set(Status::DECIMAL, value & 0x08 != 0x00);
-    }
-
-    fn set_interrupt(&mut self, value: u8) {
-        self.registers
-            .status
-            .set(Status::INTERRUPT, value & 0x04 != 0x00);
+            .set(Status::OVERFLOW, sign_a != sign_b && sign_a != sign_result);
     }
 
     fn set_zero(&mut self, value: u8) {
-        self.registers
-            .status
-            .set(Status::ZERO, value & 0x02 != 0x00);
+        self.registers.status.set(Status::ZERO, value == u8::MIN);
     }
 
-    fn set_carry(&mut self, value: u8) {
+    fn set_carry(&mut self, value: u16) {
         self.registers
             .status
-            .set(Status::CARRY, value & 0x01 != 0x00);
+            .set(Status::CARRY, value > u8::MAX as u16);
     }
 
     // Opcode implementations
@@ -386,171 +379,135 @@ impl Processor {
     // Load/store
 
     // Load accumulator
-
-    // Load accumulator immediate
-    fn lda_immediate(&mut self) {
-        let value = self.immediate();
+    fn lda(&mut self, value: u8) {
         self.registers.acc = value;
 
         self.set_negative(value);
         self.set_zero(value);
+    }
+
+    // Load accumulator immediate
+    fn lda_immediate(&mut self) {
+        let value = self.immediate();
+        self.lda(value);
     }
 
     // Load accumulator zero page
     fn lda_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator zero page, X
     fn lda_zero_page_x(&mut self) {
         let value = self.zero_page_x_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator absolute
     fn lda_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator absolute, X
     fn lda_absolute_x(&mut self) {
         let value = self.absolute_x_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator absolute, Y
     fn lda_absolute_y(&mut self) {
         let value = self.absolute_y_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator indirect, X
     fn lda_indirect_x(&mut self) {
         let value = self.indirect_x_read();
-        self.registers.acc = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.lda(value);
     }
 
     // Load accumulator indirect, Y
     fn lda_indirect_y(&mut self) {
         let value = self.indirect_y_read();
-        self.registers.acc = value;
+        self.lda(value);
+    }
+
+    // Load X register
+    fn ldx(&mut self, value: u8) {
+        self.registers.x = value;
 
         self.set_negative(value);
         self.set_zero(value);
     }
 
-    // Load X register
-
     // Load X register immediate
     fn ldx_immediate(&mut self) {
         let value = self.immediate();
-        self.registers.x = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldx(value);
     }
 
     // Load X register zero page
     fn ldx_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.x = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldx(value);
     }
 
     // Load X register zero page, Y
     fn ldx_zero_page_y(&mut self) {
         let value = self.zero_page_y_read();
-        self.registers.x = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldx(value);
     }
 
     // Load X register absolute
     fn ldx_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.x = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldx(value);
     }
 
     // Load X register absolute, Y
     fn ldx_absolute_y(&mut self) {
         let value = self.absolute_y_read();
-        self.registers.x = value;
+        self.ldx(value);
+    }
+
+    // Load Y register
+    fn ldy(&mut self, value: u8) {
+        self.registers.y = value;
 
         self.set_negative(value);
         self.set_zero(value);
     }
 
-    // Load Y register
-
     // Load Y register immediate
     fn ldy_immediate(&mut self) {
         let value = self.immediate();
-        self.registers.y = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldy(value);
     }
 
     // Load Y register zero page
     fn ldy_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.y = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldy(value);
     }
 
     // Load Y register zero page, X
     fn ldy_zero_page_x(&mut self) {
         let value = self.zero_page_x_read();
-        self.registers.y = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldy(value);
     }
 
     // Load Y register absolute
     fn ldy_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.y = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldy(value);
     }
 
     // Load Y register absolute, X
     fn ldy_absolute_x(&mut self) {
         let value = self.absolute_x_read();
-        self.registers.y = value;
-
-        self.set_negative(value);
-        self.set_zero(value);
+        self.ldy(value);
     }
 
     // Store accumulator
@@ -722,225 +679,236 @@ impl Processor {
     // Logical
 
     // Logical AND
+    fn and(&mut self, value: u8) {
+        let result = self.registers.acc & value;
+        self.registers.acc = result;
+
+        self.set_negative(result);
+        self.set_zero(result);
+    }
 
     // Logical AND immediate
     fn and_immediate(&mut self) {
         let value = self.immediate();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND zero page
     fn and_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND zero page, X
     fn and_zero_page_x(&mut self) {
         let value = self.zero_page_x_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND absolute
     fn and_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND absolute, X
     fn and_absolute_x(&mut self) {
         let value = self.absolute_x_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND absolute, Y
     fn and_absolute_y(&mut self) {
         let value = self.absolute_y_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND (indirect, X)
     fn and_indirect_x(&mut self) {
         let value = self.indirect_x_read();
-        self.registers.acc &= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.and(value)
     }
 
     // Logical AND (indirect), Y
     fn and_indirect_y(&mut self) {
         let value = self.indirect_y_read();
-        self.registers.acc &= value;
+        self.and(value)
+    }
+
+    // Logical EOR
+    fn eor(&mut self, value: u8) {
+        self.registers.acc ^= value;
 
         self.set_negative(self.registers.acc);
         self.set_zero(self.registers.acc);
     }
 
-    // Logical EOR
-
     // Logical EOR immediate
     fn eor_immediate(&mut self) {
         let value = self.immediate();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR zero page
     fn eor_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR zero page, X
     fn eor_zero_page_x(&mut self) {
         let value = self.zero_page_x_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR absolute
     fn eor_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR absolute, X
     fn eor_absolute_x(&mut self) {
         let value = self.absolute_x_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR absolute, Y
     fn eor_absolute_y(&mut self) {
         let value = self.absolute_y_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR (indirect, X)
     fn eor_indirect_x(&mut self) {
         let value = self.indirect_x_read();
-        self.registers.acc ^= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.eor(value)
     }
 
     // Logical EOR (indirect), Y
     fn eor_indirect_y(&mut self) {
         let value = self.indirect_y_read();
-        self.registers.acc ^= value;
+        self.eor(value)
+    }
+
+    // Logical ORA
+    fn ora(&mut self, value: u8) {
+        self.registers.acc |= value;
 
         self.set_negative(self.registers.acc);
         self.set_zero(self.registers.acc);
     }
 
-    // Logical ORA
-
     // Logical ORA immediate
     fn ora_immediate(&mut self) {
         let value = self.immediate();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA zero page
     fn ora_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA zero page, X
     fn ora_zero_page_x(&mut self) {
         let value = self.zero_page_x_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA absolute
     fn ora_absolute(&mut self) {
         let value = self.absolute_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA absolute, X
     fn ora_absolute_x(&mut self) {
         let value = self.absolute_x_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA absolute, Y
     fn ora_absolute_y(&mut self) {
         let value = self.absolute_y_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA (indirect, X)
     fn ora_indirect_x(&mut self) {
         let value = self.indirect_x_read();
-        self.registers.acc |= value;
-
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.ora(value)
     }
 
     // Logical ORA (indirect), Y
     fn ora_indirect_y(&mut self) {
         let value = self.indirect_y_read();
-        self.registers.acc |= value;
+        self.ora(value)
+    }
 
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+    // Arithmetic
+
+    // Add with carry
+    fn adc(&mut self, value: u8) {
+        let acc = self.registers.acc;
+        let carry = self.registers.status.contains(Status::CARRY);
+
+        let result = acc as u16 + value as u16 + carry as u16;
+        self.registers.acc = acc.wrapping_add(value).wrapping_add(carry as u8);
+
+        self.set_negative(result as u8);
+        self.set_zero(result as u8);
+        self.set_carry(result);
+        self.set_overflow(acc, value, self.registers.acc);
+    }
+
+    // Add with carry immediate
+    fn adc_immediate(&mut self) {
+        let value = self.immediate();
+        self.adc(value);
+    }
+
+    // Add with carry zero page
+    fn adc_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.adc(value);
+    }
+
+    // Add with carry zero page, X
+    fn adc_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.adc(value);
+    }
+
+    // Add with carry absolute
+    fn adc_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.adc(value);
+    }
+
+    // Add with carry absolute, X
+    fn adc_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.adc(value);
+    }
+
+    // Add with carry absolute, Y
+    fn adc_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.adc(value);
+    }
+
+    // Add with carry (indirect, X)
+    fn adc_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.adc(value);
+    }
+
+    // Add with carry (indirect), Y
+    fn adc_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.adc(value);
     }
 }
 
