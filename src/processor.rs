@@ -223,15 +223,9 @@ impl Processor {
             ORA_INDX => self.ora_indirect_x(),
             ORA_INDY => self.ora_indirect_y(),
 
-            // Arithmetic
-            ADC_IM => self.adc_immediate(),
-            ADC_ZP => self.adc_zero_page(),
-            ADC_ZPX => self.adc_zero_page_x(),
-            ADC_ABS => self.adc_absolute(),
-            ADC_ABSX => self.adc_absolute_x(),
-            ADC_ABSY => self.adc_absolute_y(),
-            ADC_INDX => self.adc_indirect_x(),
-            ADC_INDY => self.adc_indirect_y(),
+            // Bit test
+            BIT_ZP => self.bit_zero_page(),
+            BIT_ABS => self.bit_absolute(),
 
             // Unknow opcode
             _ => {
@@ -347,33 +341,6 @@ impl Processor {
         address
     }
 
-    // Set/unset flags
-
-    fn set_negative(&mut self, value: u8) {
-        self.registers
-            .status
-            .set(Status::NEGATIVE, value & 0x80 == 0x80);
-    }
-
-    fn set_overflow(&mut self, a: u8, b: u8, result: u8) {
-        let sign_a = a & 0x80 == 0x80;
-        let sign_b = b & 0x80 == 0x80;
-        let sign_result = result & 0x80 == 0x80;
-        self.registers
-            .status
-            .set(Status::OVERFLOW, sign_a != sign_b && sign_a != sign_result);
-    }
-
-    fn set_zero(&mut self, value: u8) {
-        self.registers.status.set(Status::ZERO, value == u8::MIN);
-    }
-
-    fn set_carry(&mut self, value: u16) {
-        self.registers
-            .status
-            .set(Status::CARRY, value > u8::MAX as u16);
-    }
-
     // Opcode implementations
 
     // Load/store
@@ -382,8 +349,10 @@ impl Processor {
     fn lda(&mut self, value: u8) {
         self.registers.acc = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Load accumulator immediate
@@ -438,8 +407,10 @@ impl Processor {
     fn ldx(&mut self, value: u8) {
         self.registers.x = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Load X register immediate
@@ -476,8 +447,10 @@ impl Processor {
     fn ldy(&mut self, value: u8) {
         self.registers.y = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Load Y register immediate
@@ -601,8 +574,10 @@ impl Processor {
         let value = self.registers.acc;
         self.registers.x = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Transfer accumulator to Y register
@@ -610,8 +585,10 @@ impl Processor {
         let value = self.registers.acc;
         self.registers.y = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Transfer X register to accumulator
@@ -619,8 +596,10 @@ impl Processor {
         let value = self.registers.x;
         self.registers.acc = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Transfer Y register to accumulator
@@ -628,8 +607,10 @@ impl Processor {
         let value = self.registers.y;
         self.registers.acc = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Transfer stack pointer to X register
@@ -637,8 +618,10 @@ impl Processor {
         let value = self.registers.sp;
         self.registers.x = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Transfer X register to stack pointer
@@ -666,8 +649,10 @@ impl Processor {
         let value = self.pull();
         self.registers.acc = value;
 
-        self.set_negative(value);
-        self.set_zero(value);
+        self.registers.status.set(Status::ZERO, value == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, value & 0b1000_0000 != 0);
     }
 
     // Pull processor status
@@ -683,8 +668,10 @@ impl Processor {
         let result = self.registers.acc & value;
         self.registers.acc = result;
 
-        self.set_negative(result);
-        self.set_zero(result);
+        self.registers.status.set(Status::ZERO, result == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, result & 0x80 != 0);
     }
 
     // Logical AND immediate
@@ -739,8 +726,12 @@ impl Processor {
     fn eor(&mut self, value: u8) {
         self.registers.acc ^= value;
 
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.registers
+            .status
+            .set(Status::ZERO, self.registers.acc == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, self.registers.acc & 0b1000_0000 != 0);
     }
 
     // Logical EOR immediate
@@ -795,8 +786,12 @@ impl Processor {
     fn ora(&mut self, value: u8) {
         self.registers.acc |= value;
 
-        self.set_negative(self.registers.acc);
-        self.set_zero(self.registers.acc);
+        self.registers
+            .status
+            .set(Status::ZERO, self.registers.acc == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, self.registers.acc & 0b1000_0000 != 0);
     }
 
     // Logical ORA immediate
@@ -847,68 +842,29 @@ impl Processor {
         self.ora(value)
     }
 
-    // Arithmetic
+    // Bit test
+    fn bit(&mut self, value: u8) {
+        let result = self.registers.acc & value;
 
-    // Add with carry
-    fn adc(&mut self, value: u8) {
-        let acc = self.registers.acc;
-        let carry = self.registers.status.contains(Status::CARRY);
-
-        let result = acc as u16 + value as u16 + carry as u16;
-        self.registers.acc = acc.wrapping_add(value).wrapping_add(carry as u8);
-
-        self.set_negative(result as u8);
-        self.set_zero(result as u8);
-        self.set_carry(result);
-        self.set_overflow(acc, value, self.registers.acc);
+        self.registers.status.set(Status::ZERO, result == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, result & 0b1000_0000 != 0);
+        self.registers
+            .status
+            .set(Status::OVERFLOW, result & 0b0100_0000 != 0);
     }
 
-    // Add with carry immediate
-    fn adc_immediate(&mut self) {
-        let value = self.immediate();
-        self.adc(value);
-    }
-
-    // Add with carry zero page
-    fn adc_zero_page(&mut self) {
+    // Bit test zero page
+    fn bit_zero_page(&mut self) {
         let value = self.zero_page_read();
-        self.adc(value);
+        self.bit(value)
     }
 
-    // Add with carry zero page, X
-    fn adc_zero_page_x(&mut self) {
-        let value = self.zero_page_x_read();
-        self.adc(value);
-    }
-
-    // Add with carry absolute
-    fn adc_absolute(&mut self) {
+    // Bit test absolute
+    fn bit_absolute(&mut self) {
         let value = self.absolute_read();
-        self.adc(value);
-    }
-
-    // Add with carry absolute, X
-    fn adc_absolute_x(&mut self) {
-        let value = self.absolute_x_read();
-        self.adc(value);
-    }
-
-    // Add with carry absolute, Y
-    fn adc_absolute_y(&mut self) {
-        let value = self.absolute_y_read();
-        self.adc(value);
-    }
-
-    // Add with carry (indirect, X)
-    fn adc_indirect_x(&mut self) {
-        let value = self.indirect_x_read();
-        self.adc(value);
-    }
-
-    // Add with carry (indirect), Y
-    fn adc_indirect_y(&mut self) {
-        let value = self.indirect_y_read();
-        self.adc(value);
+        self.bit(value)
     }
 }
 
