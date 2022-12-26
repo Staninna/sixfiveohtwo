@@ -1,19 +1,22 @@
+// NOTE: I only test 1 address mode for each opcode
+// Because the implementation is the same for all address modes. The only difference is getting the value from memory.
+
 pub use processor::*;
 mod processor {
     use crate::{processor::Processor, registers::Status};
     // Get status register
     fn get_status(processor: &Processor) -> (bool, bool, bool, bool, bool, bool, bool, bool) {
-        let status = processor.get_registers().status;
-        let zero = status.contains(Status::ZERO);
-        let negative = status.contains(Status::NEGATIVE);
-        let carry = status.contains(Status::CARRY);
-        let overflow = status.contains(Status::OVERFLOW);
-        let decimal = status.contains(Status::DECIMAL);
-        let interrupt = status.contains(Status::INTERRUPT);
-        let break_ = status.contains(Status::BREAK);
-        let unused = status.contains(Status::UNUSED);
+        let st = processor.get_registers().status;
+        let has = |s: Status| -> bool { st.contains(s) };
         (
-            zero, negative, carry, overflow, decimal, interrupt, break_, unused,
+            has(Status::ZERO),
+            has(Status::NEGATIVE),
+            has(Status::CARRY),
+            has(Status::OVERFLOW),
+            has(Status::DECIMAL),
+            has(Status::INTERRUPT),
+            has(Status::BREAK),
+            has(Status::UNUSED),
         )
     }
 
@@ -521,8 +524,10 @@ mod processor {
     pub use stack::*;
     mod stack {
         use super::*;
-        use crate::opcodes::{PHA, PHP, PLA, PLP};
-        use crate::processor::Processor;
+        use crate::{
+            opcodes::{PHA, PHP, PLA, PLP},
+            processor::Processor,
+        };
 
         #[test]
         // PHA - Push Accumulator to Stack
@@ -669,8 +674,10 @@ mod processor {
     pub use logical::*;
     mod logical {
         use super::*;
-        use crate::opcodes::{AND_IM, BIT_ZP, EOR_IM, ORA_IM};
-        use crate::processor::Processor;
+        use crate::{
+            opcodes::{AND_IM, BIT_ZP, EOR_IM, ORA_IM},
+            processor::Processor,
+        };
 
         #[test]
         // AND - Logical AND

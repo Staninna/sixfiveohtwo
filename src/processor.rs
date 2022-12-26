@@ -1,7 +1,9 @@
-use crate::device::Device;
-use crate::device_mapper::DeviceMapper;
-use crate::opcodes::*;
-use crate::registers::{Registers, Status};
+use crate::{
+    device::Device,
+    device_mapper::DeviceMapper,
+    opcodes::*,
+    registers::{Registers, Status},
+};
 
 pub struct Processor {
     registers: Registers,
@@ -842,7 +844,7 @@ impl Processor {
         self.ora(value)
     }
 
-    // Bit test
+    // Logical BIT test
     fn bit(&mut self, value: u8) {
         let result = self.registers.acc & value;
 
@@ -855,13 +857,13 @@ impl Processor {
             .set(Status::OVERFLOW, result & 0b0100_0000 != 0);
     }
 
-    // Bit test zero page
+    // Logical BIT zero page
     fn bit_zero_page(&mut self) {
         let value = self.zero_page_read();
         self.bit(value)
     }
 
-    // Bit test absolute
+    // Logical BIT absolute
     fn bit_absolute(&mut self) {
         let value = self.absolute_read();
         self.bit(value)
