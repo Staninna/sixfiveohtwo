@@ -304,8 +304,7 @@ impl Processor {
 
     fn absolute_x_addr(&mut self) -> u16 {
         let x = self.registers.x;
-        let address = self.fetch16().wrapping_add(x as u16);
-        address
+        self.fetch16().wrapping_add(x as u16)
     }
 
     fn absolute_y_read(&mut self) -> u8 {
@@ -316,8 +315,7 @@ impl Processor {
 
     fn absolute_y_addr(&mut self) -> u16 {
         let y = self.registers.y;
-        let address = self.fetch16().wrapping_add(y as u16);
-        address
+        self.fetch16().wrapping_add(y as u16)
     }
 
     fn indirect_x_read(&mut self) -> u8 {
@@ -351,8 +349,7 @@ impl Processor {
         let pointer = self.fetch8();
         let low = self.read(pointer as u16);
         let high = self.read(pointer.wrapping_add(1) as u16);
-        let address = u16::from_le_bytes([low, high]).wrapping_add(y as u16);
-        address
+        u16::from_le_bytes([low, high]).wrapping_add(y as u16)
     }
 
     // Opcode implementations
