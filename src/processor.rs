@@ -229,6 +229,18 @@ impl Processor {
             BIT_ZP => self.bit_zero_page(),
             BIT_ABS => self.bit_absolute(),
 
+            // Arithmetic
+
+            // Add with carry
+            ADC_IM => self.adc_immediate(),
+            ADC_ZP => self.adc_zero_page(),
+            ADC_ZPX => self.adc_zero_page_x(),
+            ADC_ABS => self.adc_absolute(),
+            ADC_ABSX => self.adc_absolute_x(),
+            ADC_ABSY => self.adc_absolute_y(),
+            ADC_INDX => self.adc_indirect_x(),
+            ADC_INDY => self.adc_indirect_y(),
+
             // Unknow opcode
             _ => {
                 panic!("Unknown opcode: {:#X}", opcode);
@@ -867,6 +879,81 @@ impl Processor {
     fn bit_absolute(&mut self) {
         let value = self.absolute_read();
         self.bit(value)
+    }
+
+    // Arithmetic
+
+    // Add with carry
+    fn adc(&mut self, value: u8) {
+        let carry = self.registers.status.contains(Status::CARRY);
+        let acc = self.registers.acc as u16;
+
+        let result = acc.wrapping_add(value as u16).wrapping_add(carry as u16);
+        self.registers.acc = result as u8;
+
+        self.registers
+            .status
+            .set(Status::ZERO, result as u8 == 0x00);
+        self.registers
+            .status
+            .set(Status::NEGATIVE, result as u8 & 0b1000_0000 != 0);
+        self.registers.status.set(Status::CARRY, result > 0xFF);
+
+        let sign_acc = (acc & 0b1000_0000) != 0;
+        let sign_value = (value as u16 & 0b1000_0000) != 0;
+        let sign_result = (result & 0b1000_0000) != 0;
+        self.registers.status.set(
+            Status::OVERFLOW,
+            (sign_acc == sign_value) && (sign_acc != sign_result),
+        );
+    }
+
+    // Add with carry immediate
+    fn adc_immediate(&mut self) {
+        let value = self.immediate();
+        self.adc(value)
+    }
+
+    // Add with carry zero page
+    fn adc_zero_page(&mut self) {
+        let value = self.zero_page_read();
+        self.adc(value)
+    }
+
+    // Add with carry zero page, X
+    fn adc_zero_page_x(&mut self) {
+        let value = self.zero_page_x_read();
+        self.adc(value)
+    }
+
+    // Add with carry absolute
+    fn adc_absolute(&mut self) {
+        let value = self.absolute_read();
+        self.adc(value)
+    }
+
+    // Add with carry absolute, X
+    fn adc_absolute_x(&mut self) {
+        let value = self.absolute_x_read();
+        self.adc(value)
+    }
+
+    // Add with carry absolute, Y
+    fn adc_absolute_y(&mut self) {
+        let value = self.absolute_y_read();
+        self.adc(value)
+    }
+
+    // Add with carry (indirect, X)
+    fn adc_indirect_x(&mut self) {
+        let value = self.indirect_x_read();
+        self.adc(value)
+    }
+
+    // Add with carry (indirect), Y
+    fn adc_indirect_y(&mut self) {
+        let value = self.indirect_y_read();
+        self.adc(value)
     }
 }
 

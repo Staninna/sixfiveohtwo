@@ -896,4 +896,103 @@ mod processor {
             assert!(overflow);
         }
     }
+
+    // Arithmetic
+    pub use arithmetic::*;
+    mod arithmetic {
+        use super::*;
+        use crate::{opcodes::ADC_IM, processor::Processor};
+
+        #[test]
+        // ADC - Add with Carry
+        fn adc_test() {
+            let mut processor = Processor::new(vec![
+                ADC_IM, 0x42, // ADC #$42 ; No flags
+                ADC_IM, 0x00, // ADC #$00 ; Zero
+                ADC_IM, 0x80, // ADC #$80 ; Negative
+                ADC_IM, 0x20, // ADC #$20 ; Overflow
+                ADC_IM, 0xFF, // ADC #$FF ; Carry
+            ]);
+
+            // Set state of processor
+            processor.set_register().acc = 0x27;
+
+            // Execute instruction
+            processor.step();
+
+            // Check processor state
+            let acc = processor.get_registers().acc;
+            let (zero, negative, carry, overflow, ..) = get_status(&processor);
+            // 0x42 + 0x27 = 0x69
+            assert_eq!(acc, 0x69);
+            assert!(!zero);
+            assert!(!negative);
+            assert!(!carry);
+            assert!(!overflow);
+
+            // Set state of processor
+            processor.set_register().acc = 0x00;
+
+            // Execute instruction
+            processor.step();
+
+            // Check processor state
+            let acc = processor.get_registers().acc;
+            let (zero, negative, carry, overflow, ..) = get_status(&processor);
+            // 0x00 + 0x00 = 0x00
+            assert_eq!(acc, 0x00);
+            assert!(zero);
+            assert!(!negative);
+            assert!(!carry);
+            assert!(!overflow);
+
+            // Set state of processor
+            processor.set_register().acc = 0x05;
+
+            // Execute instruction
+            processor.step();
+
+            // Check processor state
+            let acc = processor.get_registers().acc;
+            let (zero, negative, carry, overflow, ..) = get_status(&processor);
+            // 0x80 + 0x05 = 0x85
+            assert_eq!(acc, 0x85);
+            assert!(!zero);
+            assert!(negative);
+            assert!(!carry);
+            assert!(!overflow);
+
+            // Set state of processor
+            processor.set_register().acc = 0x7F;
+
+            // Execute instruction
+            processor.step();
+
+            // Check processor state
+            let acc = processor.get_registers().acc;
+            let (zero, negative, carry, overflow, ..) = get_status(&processor);
+            // 0x20 + 0x7F = 0x9F
+            assert_eq!(acc, 0x9F);
+            assert!(!zero);
+            assert!(negative);
+            assert!(!carry);
+            assert!(overflow);
+
+            // Set state of processor
+            processor.set_register().acc = 0x7F;
+
+            // Execute instruction
+            processor.step();
+
+            // Check processor state
+            let acc = processor.get_registers().acc;
+            let (zero, negative, carry, overflow, ..) = get_status(&processor);
+            // 0xFF + 0x7F = 0x7E
+            assert_eq!(acc, 0x7E);
+            assert!(!zero);
+            assert!(!negative);
+            assert!(carry);
+            assert!(!overflow);
+        }
+    }
 }

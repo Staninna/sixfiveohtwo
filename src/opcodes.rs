@@ -122,3 +122,17 @@ mod logical {
     pub const BIT_ZP: u8 = 0x24;
     pub const BIT_ABS: u8 = 0x2C;
 }
+
+// Arithmetic opcodes
+pub use arithmetic::*;
+mod arithmetic {
+    // Add with carry
+    pub const ADC_IM: u8 = 0x69;
+    pub const ADC_ZP: u8 = 0x65;
+    pub const ADC_ZPX: u8 = 0x75;
+    pub const ADC_ABS: u8 = 0x6D;
+    pub const ADC_ABSX: u8 = 0x7D;
+    pub const ADC_ABSY: u8 = 0x79;
+    pub const ADC_INDX: u8 = 0x61;
+    pub const ADC_INDY: u8 = 0x71;
+}
